@@ -1,0 +1,28 @@
+# Sample winget installer manifest. PLACEHOLDER URL/HASH — replace both before
+# any real submission. InstallerSha256 below is a 64-char placeholder, NOT a
+# real digest; winget validation will reject it as-is.
+PackageIdentifier: OpsIntel.OpsIntel
+PackageVersion: 0.1.0
+InstallerType: wix
+Scope: machine
+UpgradeBehavior: install
+InstallModes:
+  - silent
+  - silentWithProgress
+InstallerSwitches:
+  Silent: "/qn /norestart"
+  SilentWithProgress: "/qb /norestart"
+  Custom: ""
+  Log: "/l*v \"%TEMP%\\OpsIntel-install.log\""
+Installers:
+  - Architecture: x64
+    # PLACEHOLDER — real release URL goes here once S1 publishes a signed MSI
+    # (e.g. a GitHub Releases asset from .github/workflows/installer.yml).
+    InstallerUrl: https://example.invalid/opsintel/releases/download/v0.1.0/OpsIntel-x64.msi
+    # PLACEHOLDER — replace with `Get-FileHash -Algorithm SHA256` of the real MSI.
+    InstallerSha256: "0000000000000000000000000000000000000000000000000000000000000"
+    # PLACEHOLDER — fill in with the real ProductCode after the first WiX build
+    # (see installer/intune/detection.ps1 for the same caveat).
+    ProductCode: "{00000000-0000-0000-0000-000000000000}"
+ManifestType: installer
+ManifestVersion: 1.12.0

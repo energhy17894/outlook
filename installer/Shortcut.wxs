@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Start Menu shortcut: rapor §2 row 10 — "OpsIntel (https://localhost:6500)" as a
+  plain .url Internet Shortcut (double-click opens the default browser). WiX v7
+  has no dedicated "InternetShortcut" element and no way to format a static file's
+  CONTENT with a runtime property, so the URL below is the build-time default port
+  (6500), matching Package.wxs's PORT default. If PORT is overridden away from
+  6500 at install time, this shortcut still opens the default port.
+  TODO(Faz 0 / S2): replace with a deferred custom action (or have the first-run
+  wizard rewrite the .url file) that regenerates this file with the actual [PORT]
+  once OpsIntel.SetupHelper exists, so a non-default port is reflected correctly.
+  Interactive (non-silent) installs may additionally launch the browser at the
+  end of the UI sequence via util:WixShellExec — not wired here (no custom UI
+  sequence authored in this skeleton); silent installs never open a browser.
+-->
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <Fragment>
+
+    <StandardDirectory Id="ProgramMenuFolder">
+      <Directory Id="ProgramMenuOpsIntel" Name="OpsIntel" />
+    </StandardDirectory>
+
+    <ComponentGroup Id="OpsIntel.StartMenuShortcut">
+      <Component Id="StartMenuShortcut" Directory="ProgramMenuOpsIntel" Guid="9D4A62B5-B93E-4E5D-9C3A-D677AB59A9F7">
+        <File Id="StartMenuUrlFile"
+              Name="OpsIntel.url"
+              Source="assets\OpsIntel.url"
+              KeyPath="yes" />
+        <RemoveFolder Id="RemoveProgramMenuOpsIntel" Directory="ProgramMenuOpsIntel" On="uninstall" />
+      </Component>
+    </ComponentGroup>
+
+  </Fragment>
+</Wix>

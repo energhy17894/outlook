@@ -1,0 +1,34 @@
+{
+  "thread_id": "thr-03",
+  "description": "TR thread carrying a supplier-delay risk with an explicit mitigation.",
+  "messages": [
+    {
+      "id": "thr-03-m1",
+      "from": "zeynep.sahin@ornek.com.tr",
+      "to": ["proje-ekibi@ornek.com.tr"],
+      "date": "2026-09-02T10:05:00+03:00",
+      "subject": "Kampüs Yenileme Projesi - tedarik durumu",
+      "body": "Merhaba ekip,\n\nÇelik profil tedarikçisi gümrükte gecikme yaşadığını bildirdi. Tedarikçi gecikirse teslim tarihi en az iki hafta kayabilir. Şimdilik ikinci bir tedarikçiyle yedek görüşme başlattık.\n\nZeynep Şahin\nSaha Koordinatörü"
+    }
+  ],
+  "gold": {
+    "work_items": [],
+    "decisions": [],
+    "risks": [
+      {
+        "title": "Çelik profil tedarikçisinin gümrük gecikmesi teslim tarihini kaydırabilir",
+        "probability": 3,
+        "impact": 4,
+        "trend": "rising",
+        "mitigation": "İkinci bir tedarikçiyle yedek görüşme başlatıldı.",
+        "trigger": "Gümrükteki gecikmenin sürmesi",
+        "confidence": "med",
+        "needs_review": false,
+        "abstain_reason": null,
+        "evidence": [
+          {"message_id": "thr-03-m1", "quote": "Tedarikçi gecikirse teslim tarihi en az iki hafta kayabilir."}
+        ]
+      }
+    ]
+  }
+}

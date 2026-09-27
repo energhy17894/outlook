@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk.Worker">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <RootNamespace>OpsIntel.Intelligence</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\OpsIntel.Contracts\OpsIntel.Contracts.csproj" />
+    <ProjectReference Include="..\Platform\OpsIntel.Platform.Abstractions\OpsIntel.Platform.Abstractions.csproj" />
+    <ProjectReference Include="..\Platform\OpsIntel.Observability\OpsIntel.Observability.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" />
+  </ItemGroup>
+
+</Project>

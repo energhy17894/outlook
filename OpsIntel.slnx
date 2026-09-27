@@ -1,0 +1,20 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/OpsIntel.Contracts/OpsIntel.Contracts.csproj" />
+    <Project Path="src/OpsIntel.Host/OpsIntel.Host.csproj" />
+    <Project Path="src/OpsIntel.Intelligence/OpsIntel.Intelligence.csproj" />
+  </Folder>
+  <Folder Name="/src/Platform/">
+    <Project Path="src/Platform/OpsIntel.Observability/OpsIntel.Observability.csproj" />
+    <Project Path="src/Platform/OpsIntel.Persistence.Sqlite/OpsIntel.Persistence.Sqlite.csproj" />
+    <Project Path="src/Platform/OpsIntel.Platform.Abstractions/OpsIntel.Platform.Abstractions.csproj" />
+    <Project Path="src/Platform/OpsIntel.Platform.Windows/OpsIntel.Platform.Windows.csproj" />
+  </Folder>
+  <Folder Name="/tests/" />
+  <Folder Name="/tests/architecture/">
+    <Project Path="tests/architecture/OpsIntel.ArchitectureTests/OpsIntel.ArchitectureTests.csproj" />
+  </Folder>
+  <Folder Name="/tests/unit/">
+    <Project Path="tests/unit/OpsIntel.UnitTests/OpsIntel.UnitTests.csproj" />
+  </Folder>
+</Solution>

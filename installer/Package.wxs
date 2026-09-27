@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  OpsIntel MSI — root package definition.
+  ADR-0005 (single MSI, WiX v7), ADR-0022 (major-upgrade update model).
+  Sources: docs/research/rapor-m365-operasyon-zekasi-platform-plani.md §2,
+           docs/research/notes/msi_kurulum_dagitim.md §1, §6.
+-->
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
+     xmlns:util="http://wixtoolset.org/schemas/v4/wxs/util">
+
+  <!--
+    Package/@Id is a stable, human-readable string (WiX v6+, replaces the classic
+    UpgradeCode GUID — see FireGiant release notes issue #8584). It MUST NOT change
+    across releases: it is what MajorUpgrade keys off to find/replace older installs.
+  -->
+  <Package Id="OpsIntel.Platform"
+           Name="OpsIntel"
+           Manufacturer="OpsIntel"
+           Version="$(var.ProductVersion)"
+           UpgradeCode="{7E3B9C2A-8E9A-4B0D-9E31-4C2C0F6E0A11}"
+           Scope="perMachine"
+           Compressed="yes">
+
+    <SummaryInformation Manufacturer="OpsIntel" Description="OpsIntel operasyon zekasi platformu - MSI" />
+
+    <!--
+      ADR-0022: every release is a major upgrade. afterInstallInitialize rolls back the
+      removal of the old product if the new one fails to install (unlike the default
+      afterInstallValidate, which can leave the machine with neither version — see
+      docs.firegiant.com/wix/schema/wxs/majorupgrade). MSI ignores the 4th version field,
+      so tools/build.ps1 must bump one of the first three.
+    -->
+    <MajorUpgrade
+      Schedule="afterInstallInitialize"
+      DowngradeErrorMessage="Bilgisayarda OpsIntel'in daha yeni bir surumu kurulu. Once onu kaldirin."
+      AllowSameVersionUpgrades="no" />
+
+    <MediaTemplate EmbedCab="yes" />
+
+    <!--
+      Public, overridable-from-msiexec properties (all-uppercase Ids are public by MSI
+      rule). Secure="yes" adds them to SecureCustomProperties so their resolved value
+      (after UI / AppSearch "Remember Property" re-read on upgrade) is visible to the
+      deferred, non-impersonated custom actions in Cert.wxs via CustomActionData.
+      msiexec /i OpsIntel-x64.msi /qn PORT=6500 CERT_THUMBPRINT=... TENANT_ID=... CLIENT_ID=... ALLOW_LAN=0
+    -->
+    <Property Id="PORT" Value="6500" Secure="yes" />
+    <Property Id="CERT_THUMBPRINT" Value="" Secure="yes" />
+    <Property Id="TENANT_ID" Value="" Secure="yes" />
+    <Property Id="CLIENT_ID" Value="" Secure="yes" />
+    <Property Id="ALLOW_LAN" Value="0" Secure="yes" />
+
+    <!-- Data-retention switch for uninstall (ADR-0022 / Folders.wxs util:RemoveFolderEx). -->
+    <Property Id="REMOVE_DATA" Value="0" Secure="yes" />
+
+    <!--
+      Launch conditions (rapor §2 table, row 1). x64-only and per-machine admin install
+      are enforced here; the "TCP 6500 free" pre-check is delegated to
+      OpsIntel.SetupHelper (planned project, see Cert.wxs TODO) and is NOT yet wired
+      into an immediate custom action, because that binary does not exist in this repo
+      yet. TODO(Faz 0 spike A): add an immediate CA calling
+      "OpsIntel.SetupHelper.exe port check /port:[PORT]" before InstallValidate and
+      surface PORT_IN_USE as a launch condition once SetupHelper ships.
+    -->
+    <Launch Condition="Privileged" Message="Bu kurulum yonetici yetkisi gerektirir." />
+    <Launch Condition="VersionNT64" Message="OpsIntel yalnizca 64-bit Windows'ta kurulabilir." />
+    <!--
+      Windows 11 23H2+ / Server 2022+ per ADR-0024; Windows 10 22H2 best-effort.
+      VersionNT alone cannot distinguish Windows 10 from 11 (both report 10.0.x), so a
+      precise OS-edition/build check needs a registry-based condition
+      (CurrentBuildNumber) authored once ADR-0024's exact build-number floor is
+      confirmed on real hardware in Faz 0. Left as a conservative NT-version floor here.
+    -->
+    <Launch Condition="VersionNT &gt;= 603" Message="OpsIntel, Windows Server 2012 R2 / Windows 8.1 veya daha yenisini gerektirir (bkz. ADR-0024)." />
+
+    <!-- Feature composition: every ComponentGroup defined across the .wxs fragments. -->
+    <Feature Id="ProductFeature" Title="OpsIntel" Level="1">
+      <ComponentGroupRef Id="OpsIntel.Host.Files" />
+      <ComponentGroupRef Id="OpsIntel.Intelligence.Files" />
+      <ComponentGroupRef Id="OpsIntel.ProgramDataFolders" />
+      <ComponentGroupRef Id="OpsIntel.HostService" />
+      <ComponentGroupRef Id="OpsIntel.IntelligenceService" />
+      <ComponentGroupRef Id="OpsIntel.EventLogSources" />
+      <ComponentGroupRef Id="OpsIntel.ConfigRegistry" />
+      <ComponentGroupRef Id="OpsIntel.SetupHelperBinary" />
+      <ComponentGroupRef Id="OpsIntel.CertActions" />
+      <ComponentGroupRef Id="OpsIntel.Firewall" />
+      <ComponentGroupRef Id="OpsIntel.StartMenuShortcut" />
+    </Feature>
+
+  </Package>
+</Wix>

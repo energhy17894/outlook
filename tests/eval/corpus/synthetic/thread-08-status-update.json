@@ -1,0 +1,58 @@
+{
+  "thread_id": "thr-08",
+  "description": "Cross-message status update: a commitment made in message 1 is marked done in message 2 ('tamamlandı'). Only one open item should remain in gold.",
+  "messages": [
+    {
+      "id": "thr-08-m1",
+      "from": "kemal.ozturk@ornek.com.tr",
+      "to": ["ekip@ornek.com.tr"],
+      "date": "2026-08-25T09:00:00+03:00",
+      "subject": "UAT ortamı",
+      "body": "Merhaba,\n\nUAT ortamını Perşembe gününe kadar hazırlayacağım.\n\nKemal"
+    },
+    {
+      "id": "thr-08-m2",
+      "from": "kemal.ozturk@ornek.com.tr",
+      "to": ["ekip@ornek.com.tr"],
+      "date": "2026-08-27T17:30:00+03:00",
+      "subject": "RE: UAT ortamı",
+      "body": "Ekip,\n\nUAT ortamı tamamlandı, erişim bilgilerini ayrıca paylaşacağım.\n\nKemal\n\n> UAT ortamını Perşembe gününe kadar hazırlayacağım."
+    }
+  ],
+  "gold": {
+    "work_items": [
+      {
+        "kind": "commitment",
+        "title": "Kemal UAT ortamını hazırladı (tamamlandı)",
+        "owner_email": "kemal.ozturk@ornek.com.tr",
+        "counterparty_email": null,
+        "due_date": null,
+        "due_date_text": "Perşembe gününe kadar",
+        "status": "done",
+        "confidence": "high",
+        "needs_review": false,
+        "abstain_reason": null,
+        "evidence": [
+          {"message_id": "thr-08-m2", "quote": "UAT ortamı tamamlandı, erişim bilgilerini ayrıca paylaşacağım."}
+        ]
+      },
+      {
+        "kind": "commitment",
+        "title": "Kemal erişim bilgilerini ayrıca paylaşacak",
+        "owner_email": "kemal.ozturk@ornek.com.tr",
+        "counterparty_email": null,
+        "due_date": null,
+        "due_date_text": null,
+        "status": "open",
+        "confidence": "med",
+        "needs_review": false,
+        "abstain_reason": null,
+        "evidence": [
+          {"message_id": "thr-08-m2", "quote": "erişim bilgilerini ayrıca paylaşacağım"}
+        ]
+      }
+    ],
+    "decisions": [],
+    "risks": []
+  }
+}

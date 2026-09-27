@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Optional Burn bundle. ADR-0005: only needed if a truly separate installer must be
+  chained (VC++ redistributable if Foundry Local turns out to need it — spike C,
+  unresolved as of this writing; optional Ollama; a future team-edition PostgreSQL).
+  The MSI itself remains zero-prerequisite and works standalone via Intune/GPO/SCCM/
+  winget without this bundle. See rapor §2, msi_kurulum_dagitim.md §1 "Burn bundles".
+-->
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
+     xmlns:bal="http://wixtoolset.org/schemas/v4/wxs/bal">
+
+  <Bundle Id="OpsIntel.Setup"
+          Name="OpsIntel Setup"
+          Manufacturer="OpsIntel"
+          Version="$(var.ProductVersion)"
+          UpgradeCode="{3CC8E2DE-775E-472C-A859-A0A10EAB8F4E}">
+
+    <!--
+      bal:Overridable variables so `OpsIntelSetup.exe /quiet PORT=6500 ALLOW_LAN=0`
+      works the same way msiexec public properties do for the MSI directly
+      (msi_kurulum_dagitim.md §1 "Variable elements are not settable from the
+      command line unless bal:Overridable=yes").
+    -->
+    <Variable Name="PORT" Type="numeric" Value="6500" bal:Overridable="yes" />
+    <Variable Name="CERT_THUMBPRINT" Type="string" Value="" bal:Overridable="yes" />
+    <Variable Name="TENANT_ID" Type="string" Value="" bal:Overridable="yes" />
+    <Variable Name="CLIENT_ID" Type="string" Value="" bal:Overridable="yes" />
+    <Variable Name="ALLOW_LAN" Type="numeric" Value="0" bal:Overridable="yes" />
+    <Variable Name="REMOVE_DATA" Type="numeric" Value="0" bal:Overridable="yes" />
+    <!-- Only meaningful once an optional ExePackage below is un-commented. -->
+    <Variable Name="INSTALL_VCREDIST" Type="numeric" Value="0" bal:Overridable="yes" Hidden="no" />
+
+    <BootstrapperApplication>
+      <!--
+        WixStandardBootstrapperApplication (WixStdBA): themed wizard UI, no extra
+        runtime requirement, C++ (docs.firegiant.com/wix/tools/burn). For a fully
+        silent enterprise flow this can be swapped for
+        WixInternalUIBootstrapperApplication (shows only the MSI's own UI) — not
+        chosen here because Package.wxs authors no custom UI sequence of its own.
+      -->
+      <bal:WixStandardBootstrapperApplication
+        LicenseFile="..\..\LICENSE"
+        LogoFile="..\assets\OpsIntel.url" />
+      <!-- NOTE: LogoFile above is a placeholder path; replace with a real .png
+           logo asset before this bundle is actually built (Faz 2 / S15). -->
+    </BootstrapperApplication>
+
+    <Chain>
+      <!--
+        =====================================================================
+        OPTIONAL PREREQUISITE EXAMPLES (commented out — not part of Faz 0).
+        Each ExePackage needs a DetectCondition because Windows has no generic
+        way to detect an ExePackage's presence
+        (docs.firegiant.com/wix/schema/wxs/exepackage).
+        =====================================================================
+
+        <!- - VC++ v14 redistributable — only if Foundry Local's native
+             dependency check (spike C) says WinML/ONNX Runtime needs it.
+             Detection per MS Learn "Redistribute Visual C++ files": registry
+             value under
+             HKLM\SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\x64!Version. - ->
+        <ExePackage Id="VCRedist_x64"
+                    SourceFile="prereqs\vc_redist.x64.exe"
+                    InstallCommand="/install /quiet /norestart"
+                    RepairCommand="/repair /quiet /norestart"
+                    UninstallCommand="/uninstall /quiet /norestart"
+                    Permanent="yes"
+                    Vital="no"
+                    InstallCondition="INSTALL_VCREDIST = 1"
+                    DetectCondition="VCRedistX64Installed">
+          <ExitCode Value="3010" Behavior="forceReboot" />
+        </ExePackage>
+
+        <!- - Optional Ollama, standalone zip + service wrapper (NOT the per-user
+             OllamaSetup.exe — that installer is per-user and cannot register a
+             per-machine service; msi_kurulum_dagitim.md §2 "Ollama"). - ->
+        <ExePackage Id="OllamaService"
+                    SourceFile="prereqs\ollama-service-wrapper.exe"
+                    InstallCommand="/install /quiet"
+                    UninstallCommand="/uninstall /quiet"
+                    Permanent="no"
+                    Vital="no"
+                    InstallCondition="LLM_PROVIDER = &quot;ollama&quot;"
+                    DetectCondition="OllamaServiceInstalled" />
+
+        <!- - Future team-edition PostgreSQL (EDB zip binaries + initdb/pg_ctl
+             register, never the EDB GUI installer — msi_kurulum_dagitim.md §2). - ->
+        <ExePackage Id="PostgresBundled"
+                    SourceFile="prereqs\postgres-bootstrap.exe"
+                    InstallCommand="/install /quiet"
+                    UninstallCommand="/uninstall /quiet"
+                    Permanent="no"
+                    Vital="yes"
+                    InstallCondition="TEAM_EDITION = 1"
+                    DetectCondition="PostgresBundledInstalled" />
+      -->
+
+      <!-- The primary and only mandatory package: the zero-prerequisite MSI. -->
+      <MsiPackage Id="OpsIntelMsi"
+                  SourceFile="..\bin\$(var.InstallerPlatform)\$(var.Configuration)\OpsIntel-x64.msi"
+                  Vital="yes"
+                  DisplayInternalUI="no">
+        <MsiProperty Name="PORT" Value="[PORT]" />
+        <MsiProperty Name="CERT_THUMBPRINT" Value="[CERT_THUMBPRINT]" />
+        <MsiProperty Name="TENANT_ID" Value="[TENANT_ID]" />
+        <MsiProperty Name="CLIENT_ID" Value="[CLIENT_ID]" />
+        <MsiProperty Name="ALLOW_LAN" Value="[ALLOW_LAN]" />
+        <MsiProperty Name="REMOVE_DATA" Value="[REMOVE_DATA]" />
+      </MsiPackage>
+    </Chain>
+
+  </Bundle>
+</Wix>

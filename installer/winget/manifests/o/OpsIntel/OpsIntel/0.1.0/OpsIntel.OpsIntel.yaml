@@ -1,0 +1,9 @@
+# Sample winget version manifest (ADR-0005, ADR-0022). PLACEHOLDER — not submitted
+# to microsoft/winget-pkgs yet. Filled in for real once S1 produces a signed,
+# publicly downloadable OpsIntel-x64.msi (ADR-0006 code signing).
+# Source: docs/research/notes/msi_kurulum_dagitim.md §8 (winget InstallerType: wix/burn).
+PackageIdentifier: OpsIntel.OpsIntel
+PackageVersion: 0.1.0
+DefaultLocale: en-US
+ManifestType: version
+ManifestVersion: 1.12.0

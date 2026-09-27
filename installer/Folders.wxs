@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Directory layout: read-only binaries under Program Files, mutable state under
+  ProgramData. Rapor §2 table rows 2-3; ADR-0022 (data survives upgrade, only
+  removed on explicit REMOVE_DATA=1 uninstall).
+-->
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
+     xmlns:util="http://wixtoolset.org/schemas/v4/wxs/util">
+  <Fragment>
+
+    <StandardDirectory Id="ProgramFiles6432Folder">
+      <Directory Id="INSTALLFOLDER" Name="OpsIntel">
+        <Directory Id="HOSTDIR" Name="Host" />
+        <Directory Id="AIDIR" Name="Intelligence" />
+      </Directory>
+    </StandardDirectory>
+
+    <StandardDirectory Id="CommonAppDataFolder">
+      <Directory Id="APPDATAROOT" Name="OpsIntel">
+        <Directory Id="DATADIR" Name="data" />
+        <Directory Id="LOGSDIR" Name="logs" />
+        <Directory Id="BLOBSDIR" Name="blobs" />
+        <Directory Id="CONFIGDIR" Name="config" />
+        <Directory Id="MODELSDIR" Name="models" />
+        <Directory Id="BACKUPDIR" Name="backup" />
+      </Directory>
+    </StandardDirectory>
+
+    <!--
+      Binaries: harvested from the self-contained win-x64 publish output
+      (OpsIntelHostPublishDir / OpsIntelIntelligencePublishDir, see
+      Directory.Build.props — override on the CI/tools/build.ps1 command line).
+      The main service exe of each is EXCLUDED here because it is authored as its
+      own Component with ServiceInstall/ServiceControl in Services.wxs (the service
+      executable must be the KeyPath of the component that carries ServiceInstall).
+    -->
+    <ComponentGroup Id="OpsIntel.Host.Files" Directory="HOSTDIR">
+      <Files Include="$(var.PublishDirHost)**"
+             Exclude="$(var.PublishDirHost)OpsIntel.Host.exe" />
+    </ComponentGroup>
+
+    <ComponentGroup Id="OpsIntel.Intelligence.Files" Directory="AIDIR">
+      <Files Include="$(var.PublishDirIntelligence)**"
+             Exclude="$(var.PublishDirIntelligence)OpsIntel.Intelligence.exe" />
+    </ComponentGroup>
+
+    <!--
+      ProgramData folders. Each is created empty by the MSI (CreateFolder, no File
+      children) so that on uninstall MSI only ever removes an EMPTY directory unless
+      REMOVE_DATA=1 explicitly asks util:RemoveFolderEx to recurse and delete content
+      too. The app itself writes app.db / blobs / logs / models under these once the
+      services start (per rapor §2 row 3 and ADR-0022).
+
+      util:PermissionEx: SYSTEM + Administrators get full control; the two service
+      virtual-account SIDs get modify-equivalent rights (Read/Write/Delete/Create*)
+      so the Host and Intelligence services can read/write their own data without
+      running as SYSTEM. NOTE (msi_kurulum_dagitim.md §5): util:PermissionEx's
+      GenericRead attribute is documented as broken ("specifying this will fail to
+      grant read access") — deliberately NOT used below; explicit Read/ReadAttributes
+      are granted instead. "Users" gets no ACE at all (data may contain PII/secrets).
+    -->
+    <ComponentGroup Id="OpsIntel.ProgramDataFolders">
+
+      <Component Id="DataDirAcl" Directory="DATADIR" Guid="555A1FC0-371F-4D9D-A64F-9A230A333B50">
+        <CreateFolder>
+          <util:PermissionEx User="SYSTEM" GenericAll="yes" />
+          <util:PermissionEx User="Administrators" GenericAll="yes" />
+          <util:PermissionEx User="NT SERVICE\OpsIntel.Host" Read="yes" Write="yes" Delete="yes"
+                              CreateFile="yes" CreateChild="yes" DeleteChild="yes" Traverse="yes"
+                              ReadAttributes="yes" WriteAttributes="yes" ReadPermission="yes" />
+          <util:PermissionEx User="NT SERVICE\OpsIntel.AI" Read="yes" Write="yes" Delete="yes"
+                              CreateFile="yes" CreateChild="yes" DeleteChild="yes" Traverse="yes"
+                              ReadAttributes="yes" WriteAttributes="yes" ReadPermission="yes" />
+        </CreateFolder>
+        <!-- "Remember Property" pattern: persist the resolved data root so the
+             uninstall-time RemoveFolderEx below (and a future repair) can find it
+             even if the folder's own Directory Id resolution changes between
+             versions (msi_kurulum_dagitim.md §6). -->
+        <RegistryValue Root="HKLM" Key="SOFTWARE\OpsIntel" Name="DataDir" Type="string" Value="[DATADIR]" KeyPath="yes" />
+      </Component>
+
+      <Component Id="LogsDirAcl" Directory="LOGSDIR" Guid="F9169CA9-D3B0-4B04-8585-685DF469F8B9">
+        <CreateFolder>
+          <util:PermissionEx User="SYSTEM" GenericAll="yes" />
+          <util:PermissionEx User="Administrators" GenericAll="yes" />
+          <util:PermissionEx User="NT SERVICE\OpsIntel.Host" Read="yes" Write="yes" Delete="yes"
+                              CreateFile="yes" CreateChild="yes" DeleteChild="yes" Traverse="yes"
+                              ReadAttributes="yes" WriteAttributes="yes" ReadPermission="yes" />
+          <util:PermissionEx User="NT SERVICE\OpsIntel.AI" Read="yes" Write="yes" Delete="yes"
+                              CreateFile="yes" CreateChild="yes" DeleteChild="yes" Traverse="yes"
+                              ReadAttributes="yes" WriteAttributes="yes" ReadPermission="yes" />
+        </CreateFolder>
+        <RegistryValue Root="HKLM" Key="SOFTWARE\OpsIntel" Name="LogsDir" Type="string" Value="[LOGSDIR]" KeyPath="yes" />
+      </Component>
+
+      <Component Id="BlobsDirAcl" Directory="BLOBSDIR" Guid="E0F20578-6A3B-46D5-9B65-91E730049F84">
+        <CreateFolder>
+          <util:PermissionEx User="SYSTEM" GenericAll="yes" />
+          <util:PermissionEx User="Administrators" GenericAll="yes" />
+          <util:PermissionEx User="NT SERVICE\OpsIntel.Host" Read="yes" Write="yes" Delete="yes"
+                              CreateFile="yes" CreateChild="yes" DeleteChild="yes" Traverse="yes"
+                              ReadAttributes="yes" WriteAttributes="yes" ReadPermission="yes" />
+          <util:PermissionEx User="NT SERVICE\OpsIntel.AI" Read="yes" Write="yes" Delete="yes"
+                              CreateFile="yes" CreateChild="yes" DeleteChild="yes" Traverse="yes"
+                              ReadAttributes="yes" WriteAttributes="yes" ReadPermission="yes" />
+        </CreateFolder>
+        <RegistryValue Root="HKLM" Key="SOFTWARE\OpsIntel" Name="BlobsDir" Type="string" Value="[BLOBSDIR]" KeyPath="yes" />
+      </Component>
+
+      <!-- Config holds appsettings.Machine.json-equivalent state; app secrets may
+           land here, so it is NOT readable by the Intelligence service (least
+           privilege — Intelligence never sees Graph tokens, ADR-0001/0007). -->
+      <Component Id="ConfigDirAcl" Directory="CONFIGDIR" Guid="1E8199C8-AAE2-4D97-B986-83531CEB458D">
+        <CreateFolder>
+          <util:PermissionEx User="SYSTEM" GenericAll="yes" />
+          <util:PermissionEx User="Administrators" GenericAll="yes" />
+          <util:PermissionEx User="NT SERVICE\OpsIntel.Host" Read="yes" Write="yes" Delete="yes"
+                              CreateFile="yes" CreateChild="yes" DeleteChild="yes" Traverse="yes"
+                              ReadAttributes="yes" WriteAttributes="yes" ReadPermission="yes" />
+        </CreateFolder>
+        <RegistryValue Root="HKLM" Key="SOFTWARE\OpsIntel" Name="ConfigDir" Type="string" Value="[CONFIGDIR]" KeyPath="yes" />
+      </Component>
+
+      <Component Id="ModelsDirAcl" Directory="MODELSDIR" Guid="100497B8-040F-41BB-824E-A235D6832D25">
+        <CreateFolder>
+          <util:PermissionEx User="SYSTEM" GenericAll="yes" />
+          <util:PermissionEx User="Administrators" GenericAll="yes" />
+          <util:PermissionEx User="NT SERVICE\OpsIntel.AI" Read="yes" Write="yes" Delete="yes"
+                              CreateFile="yes" CreateChild="yes" DeleteChild="yes" Traverse="yes"
+                              ReadAttributes="yes" WriteAttributes="yes" ReadPermission="yes" />
+        </CreateFolder>
+        <RegistryValue Root="HKLM" Key="SOFTWARE\OpsIntel" Name="ModelsDir" Type="string" Value="[MODELSDIR]" KeyPath="yes" />
+      </Component>
+
+      <Component Id="BackupDirAcl" Directory="BACKUPDIR" Guid="CABE8B13-75CD-4969-A761-15560E3931F1">
+        <CreateFolder>
+          <util:PermissionEx User="SYSTEM" GenericAll="yes" />
+          <util:PermissionEx User="Administrators" GenericAll="yes" />
+          <util:PermissionEx User="NT SERVICE\OpsIntel.Host" Read="yes" Write="yes" Delete="yes"
+                              CreateFile="yes" CreateChild="yes" DeleteChild="yes" Traverse="yes"
+                              ReadAttributes="yes" WriteAttributes="yes" ReadPermission="yes" />
+        </CreateFolder>
+        <RegistryValue Root="HKLM" Key="SOFTWARE\OpsIntel" Name="BackupDir" Type="string" Value="[BACKUPDIR]" KeyPath="yes" />
+      </Component>
+
+      <!--
+        Optional data wipe. Only fires when REMOVE_DATA=1 is passed to
+        `msiexec /x ... REMOVE_DATA=1`. util:RemoveFolderEx recurses APPDATAROOT
+        (data/logs/blobs/config/models/backup) on uninstall only — never on a
+        MajorUpgrade's transient remove-then-install (that path does not set
+        REMOVE_DATA, and this component's own uninstall condition still gates it,
+        but see the Condition below which additionally excludes upgrades).
+      -->
+      <Component Id="RemoveDataOnUninstall" Directory="APPDATAROOT" Guid="60C695E2-5899-4996-A60A-7ED0C347110A">
+        <Condition>REMOVE_DATA="1" AND NOT UPGRADINGPRODUCTCODE</Condition>
+        <util:RemoveFolderEx On="uninstall" Property="APPDATAROOT" />
+        <!-- KeyPath registry value so the component is not "component-less". -->
+        <RegistryValue Root="HKLM" Key="SOFTWARE\OpsIntel" Name="RemoveDataOnUninstall" Type="integer" Value="1" KeyPath="yes" />
+      </Component>
+
+    </ComponentGroup>
+
+  </Fragment>
+</Wix>

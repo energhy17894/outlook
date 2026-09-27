@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  LAN mode firewall exception. Localhost-only mode (ALLOW_LAN=0, the default)
+  opens no firewall rule at all — rapor §2 row 9 / ADR-0003.
+-->
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
+     xmlns:fw="http://wixtoolset.org/schemas/v4/wxs/firewall">
+  <Fragment>
+
+    <ComponentGroup Id="OpsIntel.Firewall">
+      <Component Id="FirewallException" Directory="HOSTDIR" Guid="086636EF-28A9-41D2-A026-4D1AD21FA9DF">
+        <!-- Component-level Condition: this component (and its FirewallException)
+             is only installed/present when ALLOW_LAN=1. If the property later
+             flips back to 0 on a reconfigure/repair, MSI will UNINSTALL this
+             component and the rule is removed automatically. -->
+        <Condition>ALLOW_LAN="1"</Condition>
+
+        <fw:FirewallException Id="OpsIntelHostFirewallRule"
+                               Name="OpsIntel Host (HTTPS)"
+                               Description="OpsIntel Host icin gelen HTTPS baglantilarina izin verir (yalnizca LAN modu, ALLOW_LAN=1)."
+                               Port="[PORT]"
+                               Protocol="tcp"
+                               Scope="localSubnet"
+                               Profile="domain,private"
+                               IgnoreFailure="yes" />
+
+        <RegistryValue Root="HKLM" Key="SOFTWARE\OpsIntel" Name="FirewallRuleActive" Type="integer" Value="1" KeyPath="yes" />
+      </Component>
+    </ComponentGroup>
+
+  </Fragment>
+</Wix>

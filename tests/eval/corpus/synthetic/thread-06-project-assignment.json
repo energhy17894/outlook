@@ -1,0 +1,37 @@
+{
+  "thread_id": "thr-06",
+  "description": "Carries project_assignment gold: participant/customer-name signal should route the thread to the 'aurora-erp' project registry entry over 'lighthouse-crm'.",
+  "messages": [
+    {
+      "id": "thr-06-m1",
+      "from": "mehmet.kaya@ornek.com.tr",
+      "to": ["ayse.yildiz@ornek.com.tr"],
+      "date": "2026-08-11T10:00:00+03:00",
+      "subject": "Aurora ERP - PO-4471 onay",
+      "body": "Merhaba Ayşe,\n\nAurora ERP projesi kapsamında PO-4471 numaralı satın alma siparişi bugün onaylandı. Fatura süreci başlıyor.\n\nMehmet"
+    }
+  ],
+  "candidate_projects": [
+    {"id": "aurora-erp", "name": "Aurora ERP Migration", "aliases": ["Aurora"], "customer": "Örnek A.Ş.", "codes": ["PO-4471"]},
+    {"id": "lighthouse-crm", "name": "Lighthouse CRM Rollout", "aliases": ["Lighthouse"], "customer": "Example Corp", "codes": ["PO-1190"]}
+  ],
+  "gold": {
+    "work_items": [],
+    "decisions": [],
+    "risks": [],
+    "project_assignment": {
+      "chosen_project_id": "aurora-erp",
+      "candidates": [
+        {"project_id": "aurora-erp", "score": "strong"},
+        {"project_id": "lighthouse-crm", "score": "reject"}
+      ],
+      "new_project_name_suggestion": null,
+      "confidence": "high",
+      "needs_review": false,
+      "abstain_reason": null,
+      "evidence": [
+        {"message_id": "thr-06-m1", "quote": "Aurora ERP projesi kapsamında PO-4471 numaralı satın alma siparişi bugün onaylandı."}
+      ]
+    }
+  }
+}

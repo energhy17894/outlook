@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Windows Service registration for both services. Rapor §2 row 4-5;
+  msi_kurulum_dagitim.md §3 (ServiceInstall/ServiceControl/util:ServiceConfig,
+  virtual accounts, known WiX gaps #8721/#8722).
+-->
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
+     xmlns:util="http://wixtoolset.org/schemas/v4/wxs/util">
+  <Fragment>
+
+    <!--
+      Account choice: per-service virtual accounts (NT SERVICE\<ServiceName>), least
+      privilege, no password, network identity <domain>\<computer>$. This is the
+      account model ADR-0005/rapor call for; LocalSystem is explicitly rejected.
+
+      OPEN RISK (documented, pending Faz 0 validation on real Windows):
+      - It is NOT officially documented whether ServiceInstall/@Account accepts
+        "NT SERVICE\OpsIntel.Host" with no Password at all (msi_kurulum_dagitim.md
+        §3 "Gaps"). If ServiceInstall rejects it, the fallback is
+        Account="NT AUTHORITY\LocalService" (also least-privilege, no virtual SID).
+      - Granting ACLs *to* a virtual account SID (e.g. via util:User/util:Group
+        membership) fails with 0x8007056b ERROR_NO_SUCH_MEMBER — WiX discussion
+        #8722 (github.com/orgs/wixtoolset/discussions/8722). We do NOT attempt
+        group membership; Folders.wxs grants file ACLs directly to the
+        "NT SERVICE\..." SID via util:PermissionEx (which works, per #8722's own
+        workaround discussion), scheduled implicitly after InstallServices because
+        CreateFolder/PermissionEx components install after the service accounts
+        exist in the SCM. TODO(Faz 0 spike A): confirm ExecSecureObjects/
+        InstallServices ordering with `light -sw` / `wix build -v` verbose log.
+      - Delayed auto-start is deliberately NOT used: util:ServiceConfig has no
+        delayed-start attribute, and the native MSI ServiceConfig/@DelayedAutoStart
+        produces warning WIX1149 (WiX discussion #8721). Both services use plain
+        Start="auto".
+    -->
+
+    <!-- ============================= OpsIntel.Host ============================= -->
+    <ComponentGroup Id="OpsIntel.HostService">
+      <Component Id="HostServiceExe" Directory="HOSTDIR" Guid="78966314-6E81-4C39-98FC-155D8B810C36">
+        <File Id="HostServiceExeFile" Source="$(var.PublishDirHost)OpsIntel.Host.exe" KeyPath="yes" />
+
+        <ServiceInstall Id="HostServiceInstall"
+                         Name="OpsIntel.Host"
+                         DisplayName="OpsIntel Host"
+                         Description="OpsIntel HTTPS API, SPA ve M365 baglayicilari (127.0.0.1:[PORT])."
+                         Type="ownProcess"
+                         Start="auto"
+                         ErrorControl="normal"
+                         Account="NT SERVICE\OpsIntel.Host"
+                         Arguments="--urls https://127.0.0.1:[PORT]">
+          <!-- restart, restart, none — rapor §2 row 4 / msi_kurulum_dagitim.md §3 inference. -->
+          <util:ServiceConfig FirstFailureActionType="restart"
+                               SecondFailureActionType="restart"
+                               ThirdFailureActionType="none"
+                               ResetPeriodInDays="1"
+                               RestartServiceDelayInSeconds="30" />
+        </ServiceInstall>
+
+        <ServiceControl Id="HostServiceControl"
+                         Name="OpsIntel.Host"
+                         Start="install"
+                         Stop="both"
+                         Remove="uninstall"
+                         Wait="yes" />
+      </Component>
+    </ComponentGroup>
+
+    <!-- ========================= OpsIntel.Intelligence ========================= -->
+    <ComponentGroup Id="OpsIntel.IntelligenceService">
+      <Component Id="IntelligenceServiceExe" Directory="AIDIR" Guid="E4E792F2-98B8-4738-B97F-577D787082C7">
+        <File Id="IntelligenceServiceExeFile" Source="$(var.PublishDirIntelligence)OpsIntel.Intelligence.exe" KeyPath="yes" />
+
+        <!--
+          No ServiceDependency on OpsIntel.Host: Intelligence never holds a Graph
+          token and never calls Host's endpoint directly (ADR-0001/0008 — least
+          privilege / EchoLeak mitigation). Cross-process handoff is via the shared
+          SQLite job/outbox table and an ACL'd named pipe (spike-validated in
+          Faz 0), not an SCM-level start-order dependency. Intentionally no
+          ServiceDependency entry here.
+        -->
+        <ServiceInstall Id="IntelligenceServiceInstall"
+                         Name="OpsIntel.AI"
+                         DisplayName="OpsIntel Intelligence"
+                         Description="OpsIntel yapay zeka islem hatti (Foundry Local, surec ici). Graph token'i yok."
+                         Type="ownProcess"
+                         Start="auto"
+                         ErrorControl="normal"
+                         Account="NT SERVICE\OpsIntel.AI">
+          <util:ServiceConfig FirstFailureActionType="restart"
+                               SecondFailureActionType="restart"
+                               ThirdFailureActionType="none"
+                               ResetPeriodInDays="1"
+                               RestartServiceDelayInSeconds="30" />
+        </ServiceInstall>
+
+        <ServiceControl Id="IntelligenceServiceControl"
+                         Name="OpsIntel.AI"
+                         Start="install"
+                         Stop="both"
+                         Remove="uninstall"
+                         Wait="yes" />
+      </Component>
+    </ComponentGroup>
+
+    <!--
+      Event Log sources: AddWindowsService()'s EventLog sink needs an existing
+      source; only admins can create one at runtime, so create it at install time
+      (msi_kurulum_dagitim.md §2 / rapor §2 row 5).
+    -->
+    <ComponentGroup Id="OpsIntel.EventLogSources">
+      <Component Id="EventSourceHost" Directory="HOSTDIR" Guid="653F1B58-0617-47CF-9989-8F4985918645">
+        <util:EventSource Log="Application" Name="OpsIntel.Host" EventMessageFile="[#HostServiceExeFile]" KeyPath="yes" />
+      </Component>
+      <Component Id="EventSourceIntelligence" Directory="AIDIR" Guid="7999A2E8-0AA8-4A14-826E-0BD205F5E138">
+        <util:EventSource Log="Application" Name="OpsIntel.AI" EventMessageFile="[#IntelligenceServiceExeFile]" KeyPath="yes" />
+      </Component>
+    </ComponentGroup>
+
+  </Fragment>
+</Wix>

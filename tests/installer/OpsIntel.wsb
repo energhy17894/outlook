@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Windows Sandbox config for local reproduction of the Pester install matrix
+  (msi_kurulum_dagitim.md §9 "Windows Sandbox (.wsb)"). A disposable, clean VM —
+  no nested-virtualization assumption needed for local dev use; GitHub-hosted
+  runners' Sandbox/nested-virt support is unverified (see .github/workflows/installer.yml
+  comments), so CI instead runs Pester directly on the ephemeral windows-2025 runner.
+
+  Usage: double-click this file (or `WindowsSandbox.exe OpsIntel.wsb`) from a
+  checkout with a built artifacts\publish\* and installer\bin\x64\Release\
+  OpsIntel-x64.msi already present.
+-->
+<Configuration>
+  <VGpu>Disable</VGpu>
+  <Networking>Enable</Networking>
+  <MemoryInMB>4096</MemoryInMB>
+  <MappedFolders>
+    <MappedFolder>
+      <HostFolder>..\..\installer\bin\x64\Release</HostFolder>
+      <SandboxFolder>C:\OpsIntel\artifacts</SandboxFolder>
+      <ReadOnly>true</ReadOnly>
+    </MappedFolder>
+    <MappedFolder>
+      <HostFolder>.</HostFolder>
+      <SandboxFolder>C:\OpsIntel\tests</SandboxFolder>
+      <ReadOnly>true</ReadOnly>
+    </MappedFolder>
+    <MappedFolder>
+      <HostFolder>.\results</HostFolder>
+      <SandboxFolder>C:\OpsIntel\results</SandboxFolder>
+      <ReadOnly>false</ReadOnly>
+    </MappedFolder>
+  </MappedFolders>
+  <LogonCommand>
+    <Command>powershell.exe -NoExit -NoProfile -ExecutionPolicy Bypass -Command "Install-Module Pester -MinimumVersion 5.5.0 -Force -SkipPublisherCheck; $env:OPSINTEL_MSI_PATH='C:\OpsIntel\artifacts\OpsIntel-x64.msi'; Invoke-Pester -Path C:\OpsIntel\tests\Install.Tests.ps1 -Output Detailed | Out-File C:\OpsIntel\results\pester-result.txt"</Command>
+  </LogonCommand>
+</Configuration>

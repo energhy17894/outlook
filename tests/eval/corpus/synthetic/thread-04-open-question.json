@@ -1,0 +1,43 @@
+{
+  "thread_id": "thr-04",
+  "description": "Mixed TR/EN thread with an unanswered open question and a legal disclaimer footer to be ignored.",
+  "messages": [
+    {
+      "id": "thr-04-m1",
+      "from": "john.miller@example.com",
+      "to": ["kemal.ozturk@ornek.com.tr"],
+      "date": "2026-08-20T08:40:00Z",
+      "subject": "Data migration window",
+      "body": "Hi Kemal,\n\nWhich weekend works best for the production data migration, Sept 12-13 or Sept 19-20? We need your answer to lock the maintenance window with the hosting provider.\n\nThanks,\nJohn\n\n-- \nThis email and any attachments are confidential and intended solely for the addressee.\nBu e-posta ve ekleri gizlidir, yalnızca alıcısına yöneliktir."
+    },
+    {
+      "id": "thr-04-m2",
+      "from": "kemal.ozturk@ornek.com.tr",
+      "to": ["john.miller@example.com"],
+      "date": "2026-08-21T09:15:00+03:00",
+      "subject": "RE: Data migration window",
+      "body": "Merhaba John,\n\nEkip toplantısında konuşup sana döneceğim, henüz karar veremedik.\n\nKemal\n\n> Which weekend works best for the production data migration, Sept 12-13 or Sept 19-20?"
+    }
+  ],
+  "gold": {
+    "work_items": [
+      {
+        "kind": "open_question",
+        "title": "Hangi hafta sonu (12-13 Eylül veya 19-20 Eylül) üretim veri taşıması için uygun, henüz yanıtlanmadı",
+        "owner_email": "kemal.ozturk@ornek.com.tr",
+        "counterparty_email": "john.miller@example.com",
+        "due_date": null,
+        "due_date_text": null,
+        "status": "open",
+        "confidence": "high",
+        "needs_review": false,
+        "abstain_reason": null,
+        "evidence": [
+          {"message_id": "thr-04-m1", "quote": "Which weekend works best for the production data migration, Sept 12-13 or Sept 19-20?"}
+        ]
+      }
+    ],
+    "decisions": [],
+    "risks": []
+  }
+}

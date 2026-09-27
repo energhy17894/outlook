@@ -1,0 +1,57 @@
+{
+  "thread_id": "thr-02",
+  "description": "English-only thread: a decision with a clear decider and date, plus a follow-up.",
+  "messages": [
+    {
+      "id": "thr-02-m1",
+      "from": "jane.miller@example.com",
+      "to": ["procurement@example.com"],
+      "date": "2026-07-10T11:00:00Z",
+      "subject": "Vendor selection - warehouse racking",
+      "body": "Team,\n\nAfter comparing the three bids, we decided to go with Northgate Supplies for the warehouse racking contract. Price and lead time were both better than the other two vendors.\n\nJane Miller\nOperations Lead, Example Corp"
+    },
+    {
+      "id": "thr-02-m2",
+      "from": "procurement@example.com",
+      "to": ["jane.miller@example.com"],
+      "date": "2026-07-10T15:30:00Z",
+      "subject": "RE: Vendor selection - warehouse racking",
+      "body": "Got it, thanks Jane. I'll still need to follow up with legal on the contract redlines before we sign anything.\n\n--\nProcurement Team\n\n> After comparing the three bids, we decided to go with Northgate Supplies for the warehouse racking contract."
+    }
+  ],
+  "gold": {
+    "work_items": [
+      {
+        "kind": "follow_up",
+        "title": "Procurement will follow up with legal on contract redlines before signing",
+        "owner_email": "procurement@example.com",
+        "counterparty_email": null,
+        "due_date": null,
+        "due_date_text": null,
+        "status": "open",
+        "confidence": "med",
+        "needs_review": false,
+        "abstain_reason": null,
+        "evidence": [
+          {"message_id": "thr-02-m2", "quote": "I'll still need to follow up with legal on the contract redlines before we sign anything."}
+        ]
+      }
+    ],
+    "decisions": [
+      {
+        "title": "Northgate Supplies selected for the warehouse racking contract",
+        "rationale": "Price and lead time were both better than the other two vendors.",
+        "decided_by_email": "jane.miller@example.com",
+        "decided_at": "2026-07-10",
+        "status": "accepted",
+        "confidence": "high",
+        "needs_review": false,
+        "abstain_reason": null,
+        "evidence": [
+          {"message_id": "thr-02-m1", "quote": "we decided to go with Northgate Supplies for the warehouse racking contract"}
+        ]
+      }
+    ],
+    "risks": []
+  }
+}

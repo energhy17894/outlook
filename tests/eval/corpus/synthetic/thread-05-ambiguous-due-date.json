@@ -1,0 +1,35 @@
+{
+  "thread_id": "thr-05",
+  "description": "A commitment with a vague, unresolvable date — the model is expected to abstain rather than invent an ISO date.",
+  "messages": [
+    {
+      "id": "thr-05-m1",
+      "from": "elif.demir@ornek.com.tr",
+      "to": ["proje-ofisi@ornek.com.tr"],
+      "date": "2026-09-05T13:00:00+03:00",
+      "subject": "Bütçe revizyonu",
+      "body": "Merhaba,\n\nBütçe revizyonunu yakın zamanda tamamlayıp paylaşacağım, şu an başka bir teslimatla meşgulüm.\n\nElif"
+    }
+  ],
+  "gold": {
+    "work_items": [
+      {
+        "kind": "commitment",
+        "title": "Elif bütçe revizyonunu tamamlayıp paylaşacak (tarih belirsiz)",
+        "owner_email": "elif.demir@ornek.com.tr",
+        "counterparty_email": null,
+        "due_date": null,
+        "due_date_text": "yakın zamanda",
+        "status": "open",
+        "confidence": "low",
+        "needs_review": true,
+        "abstain_reason": "ambiguous_due_date",
+        "evidence": [
+          {"message_id": "thr-05-m1", "quote": "Bütçe revizyonunu yakın zamanda tamamlayıp paylaşacağım"}
+        ]
+      }
+    ],
+    "decisions": [],
+    "risks": []
+  }
+}

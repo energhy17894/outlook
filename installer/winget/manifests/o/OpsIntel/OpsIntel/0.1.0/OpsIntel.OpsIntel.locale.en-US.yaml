@@ -1,0 +1,17 @@
+# Sample winget default-locale manifest. PLACEHOLDER contact/URLs.
+PackageIdentifier: OpsIntel.OpsIntel
+PackageVersion: 0.1.0
+PackageLocale: en-US
+Publisher: OpsIntel
+PublisherUrl: https://example.invalid/opsintel
+PublisherSupportUrl: https://example.invalid/opsintel/support
+PackageName: OpsIntel
+PackageUrl: https://example.invalid/opsintel
+License: Proprietary
+ShortDescription: Yerel-once M365 operasyon zekasi platformu (iki Windows servisi, self-contained MSI kurulumu).
+Tags:
+  - m365
+  - graph
+  - windows-service
+ManifestType: defaultLocale
+ManifestVersion: 1.12.0

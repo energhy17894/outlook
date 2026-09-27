@@ -1,0 +1,72 @@
+{
+  "thread_id": "thr-09",
+  "description": "Denser thread: one decision, one risk and one request together, EN with a Turkish reply.",
+  "messages": [
+    {
+      "id": "thr-09-m1",
+      "from": "jane.miller@example.com",
+      "to": ["ayse.yildiz@ornek.com.tr"],
+      "date": "2026-09-01T12:00:00Z",
+      "subject": "Lighthouse CRM - go-live plan",
+      "body": "Hi Ayse,\n\nWe decided to push the go-live date to October 5th so the training sessions don't overlap with the holiday. Could you update the rollout calendar by Friday?\n\nOne concern: if the translation vendor misses their deadline, the Turkish UI strings won't be ready for go-live.\n\nBest,\nJane"
+    },
+    {
+      "id": "thr-09-m2",
+      "from": "ayse.yildiz@ornek.com.tr",
+      "to": ["jane.miller@example.com"],
+      "date": "2026-09-01T15:10:00+03:00",
+      "subject": "RE: Lighthouse CRM - go-live plan",
+      "body": "Merhaba Jane,\n\nTakvimi güncellerim, Cuma'ya kadar hazır olur.\n\nAyşe\n\n> We decided to push the go-live date to October 5th so the training sessions don't overlap with the holiday."
+    }
+  ],
+  "gold": {
+    "work_items": [
+      {
+        "kind": "request",
+        "title": "Ayşe rollout takvimini Cuma'ya kadar güncellesin",
+        "owner_email": "ayse.yildiz@ornek.com.tr",
+        "counterparty_email": "jane.miller@example.com",
+        "due_date": null,
+        "due_date_text": "Friday",
+        "status": "open",
+        "confidence": "high",
+        "needs_review": false,
+        "abstain_reason": null,
+        "evidence": [
+          {"message_id": "thr-09-m1", "quote": "Could you update the rollout calendar by Friday?"}
+        ]
+      }
+    ],
+    "decisions": [
+      {
+        "title": "Go-live date pushed to October 5th",
+        "rationale": "So the training sessions don't overlap with the holiday.",
+        "decided_by_email": null,
+        "decided_at": null,
+        "status": "accepted",
+        "confidence": "med",
+        "needs_review": true,
+        "abstain_reason": "ambiguous_decider",
+        "evidence": [
+          {"message_id": "thr-09-m1", "quote": "We decided to push the go-live date to October 5th so the training sessions don't overlap with the holiday."}
+        ]
+      }
+    ],
+    "risks": [
+      {
+        "title": "Turkish UI strings may not be ready for go-live if the translation vendor misses their deadline",
+        "probability": 3,
+        "impact": 4,
+        "trend": null,
+        "mitigation": null,
+        "trigger": "Translation vendor missing their deadline",
+        "confidence": "med",
+        "needs_review": false,
+        "abstain_reason": null,
+        "evidence": [
+          {"message_id": "thr-09-m1", "quote": "if the translation vendor misses their deadline, the Turkish UI strings won't be ready for go-live"}
+        ]
+      }
+    ]
+  }
+}

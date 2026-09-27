@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Registry-backed configuration. WiX has no JSON-editing element (util:XmlFile only
+  handles XML), so hand-off from the MSI to the two services is via
+  HKLM\SOFTWARE\OpsIntel, read by a small registry configuration source in
+  Program.cs (rapor §2 row 6, msi_kurulum_dagitim.md §5).
+
+  These values also serve the "Remember Property" pattern: on a MajorUpgrade,
+  AppSearch/RegistrySearch re-reads them into the matching PORT / CERT_THUMBPRINT /
+  TENANT_ID / CLIENT_ID / ALLOW_LAN properties before InstallExecuteSequence, so a
+  silent upgrade run with no properties on the command line keeps the previous
+  install's settings instead of reverting to the property defaults in Package.wxs.
+-->
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <Fragment>
+
+    <!-- Re-read prior values on upgrade/repair before they would be overwritten. -->
+    <Property Id="PORT" Secure="yes">
+      <RegistrySearch Id="PortSearch" Root="HKLM" Key="SOFTWARE\OpsIntel" Name="Port" Type="raw" />
+    </Property>
+    <Property Id="CERT_THUMBPRINT" Secure="yes">
+      <RegistrySearch Id="CertThumbprintSearch" Root="HKLM" Key="SOFTWARE\OpsIntel" Name="CertThumbprint" Type="raw" />
+    </Property>
+    <Property Id="TENANT_ID" Secure="yes">
+      <RegistrySearch Id="TenantIdSearch" Root="HKLM" Key="SOFTWARE\OpsIntel" Name="TenantId" Type="raw" />
+    </Property>
+    <Property Id="CLIENT_ID" Secure="yes">
+      <RegistrySearch Id="ClientIdSearch" Root="HKLM" Key="SOFTWARE\OpsIntel" Name="ClientId" Type="raw" />
+    </Property>
+    <Property Id="ALLOW_LAN" Secure="yes">
+      <RegistrySearch Id="AllowLanSearch" Root="HKLM" Key="SOFTWARE\OpsIntel" Name="AllowLan" Type="raw" />
+    </Property>
+
+    <ComponentGroup Id="OpsIntel.ConfigRegistry">
+      <Component Id="ConfigRegistryValues" Directory="INSTALLFOLDER" Guid="E8F5F64E-06F3-4063-9C01-0C91ABC84616">
+        <RegistryKey Root="HKLM" Key="SOFTWARE\OpsIntel">
+          <RegistryValue Name="Port" Type="string" Value="[PORT]" KeyPath="yes" />
+          <RegistryValue Name="CertThumbprint" Type="string" Value="[CERT_THUMBPRINT]" />
+          <RegistryValue Name="TenantId" Type="string" Value="[TENANT_ID]" />
+          <RegistryValue Name="ClientId" Type="string" Value="[CLIENT_ID]" />
+          <RegistryValue Name="AllowLan" Type="integer" Value="[ALLOW_LAN]" />
+          <RegistryValue Name="InstallDir" Type="string" Value="[INSTALLFOLDER]" />
+          <RegistryValue Name="ProductVersion" Type="string" Value="$(var.ProductVersion)" />
+        </RegistryKey>
+      </Component>
+    </ComponentGroup>
+
+  </Fragment>
+</Wix>

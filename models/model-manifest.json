@@ -1,0 +1,167 @@
+{
+  "$schema_note": "No formal JSON Schema file yet (Faz 0 deliverable is the manifest shape itself). Every entry below is a placeholder pending Faz 0 spike C/E results; fields marked \"TODO\" MUST be filled in before this manifest is used to pin a real deployment. No model binaries are stored in this repo (see models/README.md); sha256 pins the exact file the launcher must load from the Foundry Local catalog cache or MODEL_SOURCE share.",
+  "manifest_version": "0.1.0-draft",
+  "generated_by": "Faz 0 — extraction eval harness task",
+  "generated_at": "2026-09-27",
+  "source_refs": [
+    "docs/research/rapor-m365-operasyon-zekasi-platform-plani.md#1",
+    "docs/research/notes/ai_agent_mimarisi.md#1",
+    "docs/adr/0014-foundry-local-model-hosting.md"
+  ],
+  "tiers": {
+    "local": {
+      "description": "Süreç içi Foundry Local (varsayılan, KVKK md.9 nedeniyle) veya donanımda GPU yoksa Ollama standalone fallback. Hiçbir e-posta içeriği bu katmanın dışına çıkmaz.",
+      "models": [
+        {
+          "role": "triage_and_light_extraction",
+          "id": "TODO-qwen3.5-9b-instruct-q4",
+          "display_name": "Qwen3.5-9B-Instruct (quantized, TODO exact quant)",
+          "tier": "local",
+          "source": {
+            "provider": "foundry-local-catalog",
+            "catalog_alias": "TODO (e.g. qwen3.5-9b-instruct-generic-gpu)",
+            "uri": "TODO — Foundry Local catalog entry or Ollama library ref, resolved in Faz 0 spike C/E",
+            "fallback_runtime": "ollama (standalone zip, service mode)"
+          },
+          "sha256": "TODO-0000000000000000000000000000000000000000000000000000000000",
+          "license": "Apache-2.0 (verify exact model-card terms before shipping — TODO)",
+          "params": "9B",
+          "quantization": "TODO (candidate: Q4_K_M / int4 via WinML EP)",
+          "context_window": 262144,
+          "languages": ["multilingual (201 languages incl. Turkish, per model card)"],
+          "used_for": [
+            "triage (aksiyon gerektiren / bildirim / bülten)",
+            "coarse project routing candidates",
+            "PII / özel nitelikli veri tagging"
+          ],
+          "turkish_evaluation": {
+            "benchmark": "TurkBench (arXiv 2601.07020) does not cover this exact model/size",
+            "status": "NOT YET MEASURED — resolved by Faz 0 spike E (50-thread TR eval)"
+          },
+          "notes": "Second candidate per report: Gemma 4 12B/E4B (Apache-2.0, replaces earlier Gemma ToU)."
+        },
+        {
+          "role": "strict_local_deep_extraction",
+          "id": "TODO-qwen3-30b-a3b-instruct-q4",
+          "display_name": "Qwen3-30B-A3B-Instruct (MoE, ~3B active, TODO exact quant)",
+          "tier": "local",
+          "source": {
+            "provider": "foundry-local-catalog",
+            "catalog_alias": "TODO",
+            "uri": "TODO — resolved in Faz 0 spike E",
+            "fallback_runtime": "ollama (standalone zip, service mode)"
+          },
+          "sha256": "TODO-0000000000000000000000000000000000000000000000000000000000",
+          "license": "Apache-2.0 (verify — TODO)",
+          "params": "30B total / ~3B active (MoE)",
+          "quantization": "TODO",
+          "context_window": 131072,
+          "languages": ["multilingual (best-evidenced Turkish performer among PC-runnable models, TurkBench avg 73.4)"],
+          "used_for": [
+            "\"strict-local\" mode: full extraction (work_items/decisions/risks/project_assignment/phase_signal) without any cloud call",
+            "GPU-equipped workstations only (16GB+ VRAM recommended)"
+          ],
+          "turkish_evaluation": {
+            "benchmark": "TurkBench (arXiv 2601.07020)",
+            "score": 73.4,
+            "status": "cited from published benchmark; NOT yet re-verified in-house — Faz 0 spike E confirms on real threads"
+          },
+          "notes": "CPU-only laptops are not expected to run this class of model at practical latency (report §1); those fall back to Tier 2 cloud once KVKK SS-2 is in place, or to the smaller triage model only."
+        },
+        {
+          "role": "embedding",
+          "id": "TODO-qwen3-embedding-0.6b",
+          "display_name": "Qwen3-Embedding-0.6B",
+          "tier": "local",
+          "source": {
+            "provider": "foundry-local-catalog",
+            "catalog_alias": "TODO (e.g. qwen3-embedding-0.6b-generic-cpu)",
+            "uri": "TODO",
+            "fallback_runtime": "ollama (qwen3-embedding library)"
+          },
+          "sha256": "TODO-0000000000000000000000000000000000000000000000000000000000",
+          "license": "Apache-2.0 (verify — TODO)",
+          "params": "0.6B",
+          "quantization": "TODO",
+          "context_window": 32768,
+          "languages": ["100+ languages incl. Turkish"],
+          "used_for": ["hybrid search (FTS5 + sqlite-vec + RRF)", "project candidate kNN"],
+          "notes": "Alternative candidates evaluated in research notes §4: bge-m3 (strongest cited Turkish retrieval evidence), EmbeddingGemma-308M (smallest footprint, <200MB quantized). Pick after Faz 0 spike D (vec0.dll + SQLite3MC compatibility) and a small in-house Turkish retrieval check."
+        }
+      ]
+    },
+    "cloud": {
+      "description": "Katman 2/3: yalnızca KVKK SS-2 imzalandıktan ve bildirildikten sonra, politika kapısı ile açılır (ADR bkz. rapor §4). Varsayılan olarak KAPALI.",
+      "models": [
+        {
+          "role": "cloud_deep_extraction_default",
+          "id": "TODO-claude-sonnet-5-batch",
+          "display_name": "Claude Sonnet 5 (Batch API)",
+          "tier": "cloud",
+          "source": {
+            "provider": "anthropic-first-party-api",
+            "catalog_alias": "claude-sonnet-5 (verify exact model id string at integration time — TODO)",
+            "uri": "https://platform.claude.com/docs/en/about-claude/pricing",
+            "residency": "no EU inference geo on first-party API; use Azure OpenAI Data Zone EU or Bedrock/Vertex EU regional (+10%) if EU residency is mandatory"
+          },
+          "sha256": null,
+          "license": "Anthropic commercial API terms (no local binary; hosted inference only)",
+          "context_window": "TODO — confirm at integration time",
+          "used_for": ["cited extraction + weekly/project roll-ups when local quality/throughput is insufficient and policy gate is open"],
+          "cost_note": "~$28/user/month at 200 emails/day with 50% local triage + Batch pricing (report §1 arithmetic; recompute from real telemetry after pilot)."
+        },
+        {
+          "role": "cloud_light_extraction",
+          "id": "TODO-claude-haiku-4.5-batch",
+          "display_name": "Claude Haiku 4.5 (Batch API)",
+          "tier": "cloud",
+          "source": {
+            "provider": "anthropic-first-party-api",
+            "catalog_alias": "claude-haiku-4.5 (verify exact model id string at integration time — TODO)",
+            "uri": "https://platform.claude.com/docs/en/about-claude/pricing",
+            "residency": "no EU inference geo on first-party API; see notes on Sonnet entry above"
+          },
+          "sha256": null,
+          "license": "Anthropic commercial API terms (no local binary; hosted inference only)",
+          "context_window": "TODO — confirm at integration time",
+          "used_for": ["routine/low-stakes threads when routed to a cheaper model"],
+          "cost_note": "~$14/user/month at 200 emails/day with 50% local triage + Batch pricing (report §1 arithmetic)."
+        },
+        {
+          "role": "cloud_eu_residency_option",
+          "id": "TODO-azure-openai-eu-datazone-model",
+          "display_name": "Azure OpenAI Data Zone (EU) — exact model TODO",
+          "tier": "cloud",
+          "source": {
+            "provider": "azure-openai-data-zone",
+            "catalog_alias": "TODO",
+            "uri": "TODO",
+            "residency": "EU Data Zone Standard or Data Zone Batch, required when EU residency is mandatory and Anthropic first-party cannot be used"
+          },
+          "sha256": null,
+          "license": "Microsoft commercial API terms (no local binary; hosted inference only)",
+          "context_window": "TODO",
+          "used_for": ["EU-residency-constrained deployments (Faz 2, S13 per roadmap)"],
+          "cost_note": "TODO — per-model EU availability and Batch pricing not verified for a specific model (AI notes §1 gap)."
+        }
+      ]
+    }
+  },
+  "hardware_profile_routing": {
+    "note": "Resolved at first run by OpsIntel.Intelligence, not by this manifest; recorded here only as the intended shape.",
+    "gpu_16gb_plus": ["strict_local_deep_extraction", "triage_and_light_extraction", "embedding"],
+    "gpu_8gb_or_npu": ["triage_and_light_extraction", "embedding"],
+    "cpu_only": ["triage_and_light_extraction (reduced context/throughput expectations)", "embedding"],
+    "cloud_gate_open": ["cloud_deep_extraction_default", "cloud_light_extraction", "cloud_eu_residency_option"]
+  },
+  "integrity_and_supply_chain": {
+    "verification": "Downloaded/cached model files under %ProgramData%\\OpsIntel\\models are verified against this manifest's sha256 before load; a mismatch blocks load and is logged as an AuditEvent (see docs/architecture/threat-model.md).",
+    "no_binaries_in_repo": true,
+    "offline_delivery": "MODEL_SOURCE=\\\\paylaşım\\models for air-gapped/offline sites, per models/README.md"
+  },
+  "todo_before_pilot": [
+    "Resolve every sha256/catalog_alias/uri placeholder above once Faz 0 spike C (Foundry Local under NT SERVICE) and spike E (50-thread Turkish comparison: Qwen3.5-9B / Gemma 4 12B / Qwen3-30B-A3B / cloud baseline) complete.",
+    "Confirm exact Anthropic/Azure model id strings and API versions at integration time (they are not stable identifiers to hardcode speculatively).",
+    "Connect this manifest's roles to Microsoft.Extensions.AI IChatClient/IEmbeddingGenerator provider selection once src/OpsIntel.Intelligence exists (out of scope for this Faz 0 task — see prompts/README.md and models/README.md for the current placeholder status)."
+  ]
+}

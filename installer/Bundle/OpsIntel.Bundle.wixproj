@@ -1,0 +1,36 @@
+<Project Sdk="WixToolset.Sdk/7.0.0">
+
+  <!--
+    Optional Burn bundle (ADR-0005, Faz 2 / S15). NOT part of the primary
+    deliverable: Intune LOB/GPO/SCCM only accept the plain OpsIntel-x64.msi.
+    This bundle exists solely to optionally chain prerequisites that a single MSI
+    is architecturally forbidden from chaining itself (nested/concurrent installs
+    are deprecated — learn.microsoft.com/windows/win32/msi/concurrent-installations).
+  -->
+  <PropertyGroup>
+    <OutputName>OpsIntelSetup</OutputName>
+    <OutputType>Bundle</OutputType>
+    <InstallerPlatform>x64</InstallerPlatform>
+    <Version Condition="'$(Version)'==''">0.1.0</Version>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="WixToolset.Util.wixext" Version="7.0.0" />
+    <PackageReference Include="WixToolset.BootstrapperApplications.wixext" Version="7.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="Bundle.wxs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--
+      Chains the primary MSI produced by ../OpsIntel.Installer.wixproj. A
+      ProjectReference (rather than a hardcoded relative path to the .msi) lets
+      MSBuild resolve the harvested MsiPackage/@SourceFile and bind paths, and
+      makes `dotnet build` from tools/build.ps1 rebuild the MSI first if needed.
+    -->
+    <ProjectReference Include="..\OpsIntel.Installer.wixproj" />
+  </ItemGroup>
+
+</Project>

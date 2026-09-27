@@ -1,0 +1,58 @@
+{
+  "thread_id": "thr-01",
+  "description": "TR/EN mixed thread: a commitment and a request, with a quoted-reply signature block.",
+  "messages": [
+    {
+      "id": "thr-01-m1",
+      "from": "mehmet.kaya@ornek.com.tr",
+      "to": ["ali.veli@ornek.com.tr"],
+      "date": "2026-08-03T09:12:00+03:00",
+      "subject": "Aurora ERP - Faz 2 Kickoff",
+      "body": "Merhaba Ali,\n\nAurora ERP Faz 2 için test ortamını Pazartesiye kadar hazır edeceğim. Sunucu erişimi bende var, ekstra bir engel yok.\n\nİyi çalışmalar,\nMehmet Kaya\nProje Yöneticisi, Örnek A.Ş.\nTel: 0212 555 00 00"
+    },
+    {
+      "id": "thr-01-m2",
+      "from": "ali.veli@ornek.com.tr",
+      "to": ["mehmet.kaya@ornek.com.tr"],
+      "date": "2026-08-03T14:47:00+03:00",
+      "subject": "RE: Aurora ERP - Faz 2 Kickoff",
+      "body": "Teşekkürler Mehmet,\n\nLütfen kullanıcı listesini de bu hafta içinde gönderir misin, test senaryolarını ona göre hazırlayalım.\n\nSaygılar,\nAli Veli\n\nOn 3 Aug 2026, Mehmet Kaya wrote:\n> Aurora ERP Faz 2 için test ortamını Pazartesiye kadar hazır edeceğim. Sunucu erişimi bende var, ekstra bir engel yok."
+    }
+  ],
+  "gold": {
+    "work_items": [
+      {
+        "kind": "commitment",
+        "title": "Mehmet Aurora ERP test ortamını Pazartesiye kadar hazırlayacak",
+        "owner_email": "mehmet.kaya@ornek.com.tr",
+        "counterparty_email": "ali.veli@ornek.com.tr",
+        "due_date": null,
+        "due_date_text": "Pazartesiye kadar",
+        "status": "open",
+        "confidence": "high",
+        "needs_review": false,
+        "abstain_reason": null,
+        "evidence": [
+          {"message_id": "thr-01-m1", "quote": "Aurora ERP Faz 2 için test ortamını Pazartesiye kadar hazır edeceğim."}
+        ]
+      },
+      {
+        "kind": "request",
+        "title": "Mehmet'ten kullanıcı listesinin bu hafta içinde gönderilmesi isteniyor",
+        "owner_email": "mehmet.kaya@ornek.com.tr",
+        "counterparty_email": "ali.veli@ornek.com.tr",
+        "due_date": null,
+        "due_date_text": "bu hafta içinde",
+        "status": "open",
+        "confidence": "high",
+        "needs_review": false,
+        "abstain_reason": null,
+        "evidence": [
+          {"message_id": "thr-01-m2", "quote": "Lütfen kullanıcı listesini de bu hafta içinde gönderir misin"}
+        ]
+      }
+    ],
+    "decisions": [],
+    "risks": []
+  }
+}

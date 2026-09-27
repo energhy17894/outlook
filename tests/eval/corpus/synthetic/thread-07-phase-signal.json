@@ -1,0 +1,33 @@
+{
+  "thread_id": "thr-07",
+  "description": "Carries phase_signal gold: contract-signature language signals Teklif -> Sözleşme.",
+  "lifecycle_phase_ids_in_order": ["teklif", "sozlesme", "planlama", "uygulama", "test_kabul", "kapanis"],
+  "messages": [
+    {
+      "id": "thr-07-m1",
+      "from": "ali.veli@ornek.com.tr",
+      "to": ["mehmet.kaya@ornek.com.tr"],
+      "date": "2026-08-18T16:20:00+03:00",
+      "subject": "Aurora ERP - sözleşme",
+      "body": "Mehmet,\n\nSözleşmeyi bugün her iki taraf da imzaladı, harika bir haber! Planlama aşamasına ne zaman geçebiliriz?\n\nAli"
+    }
+  ],
+  "gold": {
+    "work_items": [],
+    "decisions": [],
+    "risks": [],
+    "phase_signals": [
+      {
+        "from_phase": "teklif",
+        "to_phase": "sozlesme",
+        "signal_strength": "strong",
+        "confidence": "high",
+        "needs_review": false,
+        "abstain_reason": null,
+        "evidence": [
+          {"message_id": "thr-07-m1", "quote": "Sözleşmeyi bugün her iki taraf da imzaladı"}
+        ]
+      }
+    ]
+  }
+}

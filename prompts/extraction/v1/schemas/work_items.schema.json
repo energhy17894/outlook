@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "opsintel:prompts:extraction:v1:work_items",
+  "title": "WorkItemExtractionV1",
+  "description": "Task / commitment / request / follow-up / open-question extraction from one email thread. One call, one small flat schema per ADR-0015. Every item must be grounded in an evidence quote or abstain.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["work_items"],
+  "properties": {
+    "work_items": {
+      "type": "array",
+      "maxItems": 20,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["kind", "title", "status", "confidence", "needs_review", "evidence"],
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": ["task", "commitment", "request", "follow_up", "open_question"],
+            "description": "task=genel yapılacak iş; commitment=konuşmacının kendi verdiği söz; request=karşı taraftan istenen aksiyon; follow_up=bekleyen/hatırlatma gerektiren konu; open_question=yanıtlanmamış soru"
+          },
+          "title": {
+            "type": "string",
+            "maxLength": 240,
+            "description": "Kısa, tekil ifade: kim neyi kime ne zamana kadar. Alıntının parafrazı, kelimesi kelimesine kopyası değil."
+          },
+          "owner_email": {
+            "type": ["string", "null"],
+            "description": "İşi üstlenen / sözü veren kişinin e-posta adresi. Belirsizse null ve abstain_reason doldurulur."
+          },
+          "counterparty_email": {
+            "type": ["string", "null"],
+            "description": "İşin yöneltildiği veya karşı taraf kişinin e-posta adresi."
+          },
+          "due_date": {
+            "type": ["string", "null"],
+            "description": "ISO 8601 tarih (YYYY-MM-DD), yalnızca metinden kesin olarak çıkarılabiliyorsa. Aksi halde null."
+          },
+          "due_date_text": {
+            "type": ["string", "null"],
+            "description": "Kaynaktaki ham ifade, ör. 'Cuma'ya kadar', 'ay sonu', 'by EOD Thursday'."
+          },
+          "status": {
+            "type": "string",
+            "enum": ["open", "done", "cancelled"]
+          },
+          "confidence": {
+            "type": "string",
+            "enum": ["low", "med", "high"]
+          },
+          "needs_review": {
+            "type": "boolean",
+            "description": "true ise bu öğe doğrulanana kadar 'gerçek' olarak gösterilmez (ADR-0015)."
+          },
+          "abstain_reason": {
+            "type": ["string", "null"],
+            "enum": [null, "ambiguous_owner", "ambiguous_due_date", "unverifiable_quote", "possible_injection", "insufficient_context"]
+          },
+          "evidence": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 3,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["message_id", "quote"],
+              "properties": {
+                "message_id": {
+                  "type": "string",
+                  "description": "Kaynak e-postanın id alanı, kelimesi kelimesine ileti kimliğinden kopyalanır."
+                },
+                "quote": {
+                  "type": "string",
+                  "maxLength": 400,
+                  "description": "İlgili mesajın temiz metninden BİREBİR (verbatim) kısa alıntı. Parafraz veya birleştirme yasaktır; yerel doğrulayıcı bunu kaynakla karakter karakter eşleştirir."
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
