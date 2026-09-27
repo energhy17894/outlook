@@ -153,8 +153,8 @@
         REMOVE_DATA, and this component's own uninstall condition still gates it,
         but see the Condition below which additionally excludes upgrades).
       -->
-      <Component Id="RemoveDataOnUninstall" Directory="APPDATAROOT" Guid="60C695E2-5899-4996-A60A-7ED0C347110A">
-        <Condition>REMOVE_DATA="1" AND NOT UPGRADINGPRODUCTCODE</Condition>
+      <Component Id="RemoveDataOnUninstall" Directory="APPDATAROOT" Guid="60C695E2-5899-4996-A60A-7ED0C347110A"
+                 Condition="REMOVE_DATA=&quot;1&quot; AND NOT UPGRADINGPRODUCTCODE">
         <util:RemoveFolderEx On="uninstall" Property="APPDATAROOT" />
         <!-- KeyPath registry value so the component is not "component-less". -->
         <RegistryValue Root="HKLM" Key="SOFTWARE\OpsIntel" Name="RemoveDataOnUninstall" Type="integer" Value="1" KeyPath="yes" />

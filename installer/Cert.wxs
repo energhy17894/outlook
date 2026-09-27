@@ -35,72 +35,81 @@
     <ComponentGroup Id="OpsIntel.CertActions">
 
       <!-- ===================== install/upgrade: provision cert ===================== -->
+      <!-- SetProperty/CustomAction/InstallExecuteSequence scheduling for all three
+           actions below live outside any Component (v4+ requires them as children
+           of Fragment/Package, not Component) — see the Fragment-level authoring
+           further down. These two components exist only to carry a KeyPath
+           registry value recording that provisioning/removal ran, so neither
+           component is "component-less". -->
       <Component Id="CertCreateCA" Directory="HOSTDIR" Guid="EACB544A-D820-4A2F-9343-32F8FAC17D5D">
-        <!--
-          Rollback CA MUST be authored (and scheduled) before its corresponding
-          deferred CA, sharing the same CustomActionData, so MSI can undo a
-          partially-applied install (FireGiant WixQuietExec pattern,
-          docs.firegiant.com/wix/tools/wixext/quietexec).
-
-          BinaryRef naming below follows the WixQuietExec convention documented in
-          msi_kurulum_dagitim.md §5 for the util extension's CA DLL
-          ("Wix4UtilCA_$(sys.BUILDARCHSHORT)"). NOT independently verified against
-          WixToolset.Util.wixext 7.0.0's actual generated Binary Id — confirm with
-          a verbose `dotnet build -v:detailed` / `wix build -v` log in Faz 0 spike A
-          and correct the prefix (Wix4/Wix5/Wix7?) if it differs.
-        -->
-        <SetProperty Id="CertCreateRollback"
-                     Before="CertCreateRollback"
-                     Sequence="execute"
-                     Value="&quot;[#SetupHelperExeFile]&quot; cert remove --port=[PORT]" />
-        <CustomAction Id="CertCreateRollback"
-                      BinaryRef="Wix4UtilCA_$(sys.BUILDARCHSHORT)"
-                      DllEntry="WixQuietExec"
-                      Execute="rollback"
-                      Impersonate="no"
-                      Return="ignore" />
-
-        <SetProperty Id="CertCreate"
-                     Before="CertCreate"
-                     Sequence="execute"
-                     Value="&quot;[#SetupHelperExeFile]&quot; cert create --thumbprint=[CERT_THUMBPRINT] --port=[PORT]" />
-        <CustomAction Id="CertCreate"
-                      BinaryRef="Wix4UtilCA_$(sys.BUILDARCHSHORT)"
-                      DllEntry="WixQuietExec"
-                      Execute="deferred"
-                      Impersonate="no"
-                      Return="check" />
-
-        <!-- KeyPath so the component is not "component-less"; also records that
-             provisioning ran, for a future repair to detect drift. -->
         <RegistryValue Root="HKLM" Key="SOFTWARE\OpsIntel" Name="CertProvisioned" Type="integer" Value="1" KeyPath="yes" />
       </Component>
 
       <!-- ============================ uninstall: remove cert ============================ -->
       <Component Id="CertRemoveCA" Directory="HOSTDIR" Guid="B11EDC70-500E-4653-B1DC-37340F69E399">
-        <!--
-          ADR-0004 point 5: certificate is removed on a real uninstall, but NOT
-          during a MajorUpgrade's transient remove-then-install
-          (afterInstallInitialize keeps the old files/services around until the
-          new ones are in place, so removing the cert mid-upgrade would cause a
-          visible HTTPS outage). UPGRADINGPRODUCTCODE is set by MajorUpgrade only
-          during that transient removal.
-        -->
-        <SetProperty Id="CertRemove"
-                     Before="CertRemove"
-                     Sequence="execute"
-                     Value="&quot;[#SetupHelperExeFile]&quot; cert remove --port=[PORT]" />
-        <CustomAction Id="CertRemove"
-                      BinaryRef="Wix4UtilCA_$(sys.BUILDARCHSHORT)"
-                      DllEntry="WixQuietExec"
-                      Execute="deferred"
-                      Impersonate="no"
-                      Return="ignore"
-                      Condition="(REMOVE=&quot;ALL&quot;) AND (NOT UPGRADINGPRODUCTCODE)" />
         <RegistryValue Root="HKLM" Key="SOFTWARE\OpsIntel" Name="CertRemoveOnUninstall" Type="integer" Value="1" KeyPath="yes" />
       </Component>
 
     </ComponentGroup>
+
+    <!--
+      Rollback CA MUST be authored (and scheduled) before its corresponding
+      deferred CA, sharing the same CustomActionData, so MSI can undo a
+      partially-applied install (FireGiant WixQuietExec pattern,
+      docs.firegiant.com/wix/tools/wixext/quietexec).
+
+      BinaryRef naming below follows the WixQuietExec convention documented in
+      msi_kurulum_dagitim.md §5 for the util extension's CA DLL
+      ("Wix4UtilCA_$(sys.BUILDARCHSHORT)"). NOT independently verified against
+      WixToolset.Util.wixext 7.0.0's actual generated Binary Id — confirm with
+      a verbose `dotnet build -v:detailed` / `wix build -v` log in Faz 0 spike A
+      and correct the prefix (Wix4/Wix5/Wix7?) if it differs.
+
+      v4+ syntax: SetProperty and CustomAction are Fragment/Package children,
+      never Component children; scheduling happens exclusively via the
+      InstallExecuteSequence/Custom elements below (Custom/@Condition, not a
+      Condition child element).
+    -->
+    <SetProperty Id="CertCreateRollback"
+                 Before="CertCreateRollback"
+                 Sequence="execute"
+                 Value="&quot;[#SetupHelperExeFile]&quot; cert remove --port=[PORT]" />
+    <CustomAction Id="CertCreateRollback"
+                  BinaryRef="Wix4UtilCA_$(sys.BUILDARCHSHORT)"
+                  DllEntry="WixQuietExec"
+                  Execute="rollback"
+                  Impersonate="no"
+                  Return="ignore" />
+
+    <SetProperty Id="CertCreate"
+                 Before="CertCreate"
+                 Sequence="execute"
+                 Value="&quot;[#SetupHelperExeFile]&quot; cert create --thumbprint=[CERT_THUMBPRINT] --port=[PORT]" />
+    <CustomAction Id="CertCreate"
+                  BinaryRef="Wix4UtilCA_$(sys.BUILDARCHSHORT)"
+                  DllEntry="WixQuietExec"
+                  Execute="deferred"
+                  Impersonate="no"
+                  Return="check" />
+
+    <!--
+      ADR-0004 point 5: certificate is removed on a real uninstall, but NOT
+      during a MajorUpgrade's transient remove-then-install
+      (afterInstallInitialize keeps the old files/services around until the
+      new ones are in place, so removing the cert mid-upgrade would cause a
+      visible HTTPS outage). UPGRADINGPRODUCTCODE is set by MajorUpgrade only
+      during that transient removal.
+    -->
+    <SetProperty Id="CertRemove"
+                 Before="CertRemove"
+                 Sequence="execute"
+                 Value="&quot;[#SetupHelperExeFile]&quot; cert remove --port=[PORT]" />
+    <CustomAction Id="CertRemove"
+                  BinaryRef="Wix4UtilCA_$(sys.BUILDARCHSHORT)"
+                  DllEntry="WixQuietExec"
+                  Execute="deferred"
+                  Impersonate="no"
+                  Return="ignore" />
 
     <InstallExecuteSequence>
       <!-- Certificate must exist before the Host service starts serving HTTPS. -->

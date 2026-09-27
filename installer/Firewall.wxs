@@ -8,20 +8,32 @@
   <Fragment>
 
     <ComponentGroup Id="OpsIntel.Firewall">
-      <Component Id="FirewallException" Directory="HOSTDIR" Guid="086636EF-28A9-41D2-A026-4D1AD21FA9DF">
-        <!-- Component-level Condition: this component (and its FirewallException)
-             is only installed/present when ALLOW_LAN=1. If the property later
-             flips back to 0 on a reconfigure/repair, MSI will UNINSTALL this
-             component and the rule is removed automatically. -->
-        <Condition>ALLOW_LAN="1"</Condition>
+      <!-- Component-level Condition (v4+ syntax: an attribute, not a child element):
+           this component (and its FirewallExceptions) is only installed/present
+           when ALLOW_LAN=1. If the property later flips back to 0 on a
+           reconfigure/repair, MSI will UNINSTALL this component and both rules
+           are removed automatically. -->
+      <Component Id="FirewallException" Directory="HOSTDIR" Guid="086636EF-28A9-41D2-A026-4D1AD21FA9DF"
+                 Condition="ALLOW_LAN=&quot;1&quot;">
 
-        <fw:FirewallException Id="OpsIntelHostFirewallRule"
-                               Name="OpsIntel Host (HTTPS)"
+        <!-- fw:FirewallException/@Profile only accepts a single value
+             (domain|private|public|all), so the domain+private combination this
+             rule originally asked for is authored as two exceptions instead. -->
+        <fw:FirewallException Id="OpsIntelHostFirewallRuleDomain"
+                               Name="OpsIntel Host (HTTPS, domain)"
                                Description="OpsIntel Host icin gelen HTTPS baglantilarina izin verir (yalnizca LAN modu, ALLOW_LAN=1)."
                                Port="[PORT]"
                                Protocol="tcp"
                                Scope="localSubnet"
-                               Profile="domain,private"
+                               Profile="domain"
+                               IgnoreFailure="yes" />
+        <fw:FirewallException Id="OpsIntelHostFirewallRulePrivate"
+                               Name="OpsIntel Host (HTTPS, private)"
+                               Description="OpsIntel Host icin gelen HTTPS baglantilarina izin verir (yalnizca LAN modu, ALLOW_LAN=1)."
+                               Port="[PORT]"
+                               Protocol="tcp"
+                               Scope="localSubnet"
+                               Profile="private"
                                IgnoreFailure="yes" />
 
         <RegistryValue Root="HKLM" Key="SOFTWARE\OpsIntel" Name="FirewallRuleActive" Type="integer" Value="1" KeyPath="yes" />

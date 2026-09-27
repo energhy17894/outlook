@@ -37,12 +37,17 @@
         silent enterprise flow this can be swapped for
         WixInternalUIBootstrapperApplication (shows only the MSI's own UI) — not
         chosen here because Package.wxs authors no custom UI sequence of its own.
+
+        WiX v6+/v7: @Theme is now required (WIX0010 otherwise). "rtfLicense" is
+        the theme that pairs with a LicenseFile (as opposed to a LicenseUrl).
+        @LogoFile was dropped: the placeholder pointed at assets\OpsIntel.url,
+        which is a .url shortcut, not an image the BA can actually load as a
+        logo — omit it entirely until a real .png logo asset exists (Faz 2 / S15)
+        rather than ship a broken reference.
       -->
       <bal:WixStandardBootstrapperApplication
-        LicenseFile="..\..\LICENSE"
-        LogoFile="..\assets\OpsIntel.url" />
-      <!-- NOTE: LogoFile above is a placeholder path; replace with a real .png
-           logo asset before this bundle is actually built (Faz 2 / S15). -->
+        Theme="rtfLicense"
+        LicenseFile="..\..\LICENSE" />
     </BootstrapperApplication>
 
     <Chain>
@@ -95,11 +100,14 @@
                     DetectCondition="PostgresBundledInstalled" />
       -->
 
-      <!-- The primary and only mandatory package: the zero-prerequisite MSI. -->
+      <!-- The primary and only mandatory package: the zero-prerequisite MSI.
+           @DisplayInternalUI was removed from MsiPackage in WiX v6+/v7 (Burn now
+           always suppresses the MSI's own UI when chained; the bal:-namespaced
+           bal:DisplayInternalUICondition exists only for the opt-in case, which
+           Package.wxs's silent/UI-less authoring does not need). -->
       <MsiPackage Id="OpsIntelMsi"
                   SourceFile="..\bin\$(var.InstallerPlatform)\$(var.Configuration)\OpsIntel-x64.msi"
-                  Vital="yes"
-                  DisplayInternalUI="no">
+                  Vital="yes">
         <MsiProperty Name="PORT" Value="[PORT]" />
         <MsiProperty Name="CERT_THUMBPRINT" Value="[CERT_THUMBPRINT]" />
         <MsiProperty Name="TENANT_ID" Value="[TENANT_ID]" />
