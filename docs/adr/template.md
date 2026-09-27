@@ -45,5 +45,5 @@
 ## Kaynaklar
 
 - [Araştırma raporu §N](../research/rapor-m365-operasyon-zekasi-platform-plani.md)
-- [İlgili araştırma notu](../research/notes/<dosya>.md)
+- [İlgili araştırma notu](../research/README.md) (ör. `../research/notes/<dosya>.md`)
 - <Dış kaynak URL'leri>
