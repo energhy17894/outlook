@@ -13,6 +13,13 @@ using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// MSI-provisioned config (installer/Config.wxs writes HKLM\SOFTWARE\OpsIntel): lower precedence
+// than environment variables, higher than appsettings.json defaults. No-op on non-Windows.
+if (OperatingSystem.IsWindows())
+{
+    builder.Configuration.AddOpsIntelWindowsRegistryConfiguration();
+}
+
 builder.Host.UseWindowsService();
 builder.Host.AddOpsIntelObservability("OpsIntel.Host");
 
@@ -60,6 +67,12 @@ builder.Services.AddHealthChecks();
 // reply-draft-only writes). The DPAPI secret store also backs the MSAL token cache.
 builder.Services.Configure<DpapiSecretStoreOptions>(
     builder.Configuration.GetSection("OpsIntel:Secrets"));
+builder.Services.PostConfigure<DpapiSecretStoreOptions>(options =>
+{
+    // Secrets live under CONFIGDIR (installer/Folders.wxs: "app secrets may land here"), not
+    // relative to the read-only Program Files content root the service process starts in.
+    options.StorageDirectory = OpsIntelPaths.ResolveDirectory(builder.Configuration, "ConfigDir", options.StorageDirectory);
+});
 builder.Services.AddSingleton<ISecretStore, DpapiSecretStore>();
 builder.Services.AddOpsIntelGraphConnector(builder.Configuration);
 

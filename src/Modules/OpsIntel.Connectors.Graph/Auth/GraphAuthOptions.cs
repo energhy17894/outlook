@@ -25,7 +25,14 @@ public sealed class GraphAuthOptions
     /// rather than a short-lived per-login listener, this connector uses a fixed, registered
     /// path instead of relying on that special case).
     /// </summary>
-    public string RedirectUri { get; set; } = "http://localhost:6500/auth/callback";
+    /// <remarks>
+    /// Host serves HTTPS only (ADR-0003/ADR-0004 — no HTTP listener at all), so this must be an
+    /// <c>https://</c> URI. Left empty (the default) it is derived at startup from the
+    /// configured Kestrel port via <see cref="GraphAuthRedirectUriResolver.Resolve"/>
+    /// (<c>https://localhost:&lt;port&gt;/auth/callback</c>); set it explicitly only when the
+    /// app registration needs a different host/path.
+    /// </remarks>
+    public string RedirectUri { get; set; } = string.Empty;
 
     /// <summary>Key this connector's MSAL token cache blob is stored under in <see cref="OpsIntel.Platform.Abstractions.ISecretStore"/>.</summary>
     public string TokenCacheSecretKey { get; set; } = "graph-msal-token-cache";

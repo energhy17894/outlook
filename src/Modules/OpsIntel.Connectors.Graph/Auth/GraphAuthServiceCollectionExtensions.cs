@@ -18,6 +18,26 @@ public static class GraphAuthServiceCollectionExtensions
     {
         services.Configure<GraphAuthOptions>(configuration.GetSection(GraphAuthOptions.ConfigurationSection));
 
+        // RedirectUri left empty (the default) derives from Host's actual Kestrel port rather
+        // than hardcoding it, and always as https:// — Host never listens on http (ADR-0003).
+        services.PostConfigure<GraphAuthOptions>(options =>
+        {
+            var port = configuration.GetValue("OpsIntel:Kestrel:Port", 6500);
+            options.RedirectUri = GraphAuthRedirectUriResolver.Resolve(options.RedirectUri, port);
+        });
+
+        // No ClientId configured yet (no tenant/app registration provisioned): register a
+        // no-op auth service instead of a real MSAL pipeline, so Host still starts and serves
+        // everything except sign-in (which reports 503, not a crash — see
+        // NotConfiguredGraphAuthService). Building PublicClientApplicationBuilder.Create("")
+        // throws, so this check must happen before that call, not inside it.
+        var clientId = configuration[$"{GraphAuthOptions.ConfigurationSection}:ClientId"];
+        if (string.IsNullOrWhiteSpace(clientId))
+        {
+            services.AddSingleton<IGraphAuthService, NotConfiguredGraphAuthService>();
+            return services;
+        }
+
         services.AddSingleton<IPublicClientApplication>(sp =>
         {
             var options = sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<GraphAuthOptions>>().Value;

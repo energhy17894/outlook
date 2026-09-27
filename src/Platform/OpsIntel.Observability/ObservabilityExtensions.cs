@@ -3,6 +3,7 @@ using Microsoft.Extensions.Hosting;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
+using OpsIntel.Platform.Abstractions;
 using Serilog;
 using Serilog.Events;
 
@@ -26,7 +27,9 @@ public static class ObservabilityExtensions
                 .Enrich.With<RedactionEnricher>()
                 .WriteTo.Console(formatProvider: System.Globalization.CultureInfo.InvariantCulture)
                 .WriteTo.File(
-                    Path.Combine(AppContext.BaseDirectory, "logs", string.Format(System.Globalization.CultureInfo.InvariantCulture, "{0}-.log", serviceName)),
+                    Path.Combine(
+                        OpsIntelPaths.ResolveDirectory(context.Configuration, "LogsDir", "logs"),
+                        string.Format(System.Globalization.CultureInfo.InvariantCulture, "{0}-.log", serviceName)),
                     rollingInterval: RollingInterval.Day,
                     restrictedToMinimumLevel: LogEventLevel.Information,
                     formatProvider: System.Globalization.CultureInfo.InvariantCulture);

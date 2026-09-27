@@ -1,7 +1,8 @@
 name: installer
 
 # Builds the OpsIntel MSI (and, on request, the optional Burn bundle) on
-# windows-latest. ADR-0005/ADR-0006. Sources: docs/research/notes/
+# windows-latest, then installs it and smoke-tests it on a second
+# windows-latest runner. ADR-0005/ADR-0006. Sources: docs/research/notes/
 # msi_kurulum_dagitim.md §9, docs/adr/0005-single-msi-wix-v7.md,
 # docs/adr/0006-code-signing.md.
 #
@@ -14,31 +15,19 @@ name: installer
 # - src/OpsIntel.Host and src/OpsIntel.Intelligence are owned by a parallel
 #   workstream. This workflow fails clearly (via tools/build.ps1's own guard)
 #   if they are not present yet, rather than silently producing an empty MSI.
-# - Signing is entirely conditional on secrets being configured (see the
-#   `if:` on the Sign step). Until an ADR-0006 signing vendor is contracted,
-#   this workflow still builds and uploads an UNSIGNED MSI artifact so the
-#   installer skeleton itself can be reviewed/tested.
+# - Signing is entirely conditional on secrets being configured. A step's
+#   `if:` cannot reference `secrets.*` directly (GitHub Actions rejects that
+#   expression at parse time, which is why this workflow previously showed 0
+#   jobs on every run) — so the secret is mapped to a job-level `env` var
+#   once, and every conditional below reads `env.SIGNING_THUMBPRINT` instead.
+#   Until an ADR-0006 signing vendor is contracted, this workflow still builds
+#   and uploads an UNSIGNED MSI artifact so the installer skeleton itself can
+#   be reviewed/tested.
 
 on:
   push:
-    branches: [main]
-    paths:
-      - "installer/**"
-      - "src/OpsIntel.Host/**"
-      - "src/OpsIntel.Intelligence/**"
-      - "src/OpsIntel.SetupHelper/**"
-      - "tools/build.ps1"
-      - "tools/sign.ps1"
-      - ".github/workflows/installer.yml"
+    branches: [main, "claude/**"]
   pull_request:
-    paths:
-      - "installer/**"
-      - "src/OpsIntel.Host/**"
-      - "src/OpsIntel.Intelligence/**"
-      - "src/OpsIntel.SetupHelper/**"
-      - "tools/build.ps1"
-      - "tools/sign.ps1"
-      - ".github/workflows/installer.yml"
   workflow_dispatch:
     inputs:
       build_bundle:
@@ -53,6 +42,10 @@ jobs:
   build-msi:
     name: Build MSI
     runs-on: windows-latest
+    env:
+      # Secrets cannot be used directly in a step `if:` expression — map it to
+      # a job-level env var once and test `env.SIGNING_THUMBPRINT` instead.
+      SIGNING_THUMBPRINT: ${{ secrets.OPSINTEL_SIGNING_CERT_THUMBPRINT }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -62,6 +55,15 @@ jobs:
         with:
           # Matches global.json; keep in sync with it (ADR-0002, .NET 10 LTS).
           dotnet-version: "10.0.x"
+
+      - name: Enable corepack (pnpm) for the optional SPA build
+        shell: pwsh
+        run: |
+          # tools/build.ps1 shells out to `pnpm` to build src/web when it is
+          # present; corepack ships with Node (preinstalled on windows-latest)
+          # but pnpm itself must be enabled once before it is callable.
+          corepack enable
+          corepack prepare pnpm@latest --activate
 
       - name: Compute build version
         id: version
@@ -91,15 +93,13 @@ jobs:
         # no first-party GitHub Action is assumed here. Until an OV
         # cert/cloud-HSM vendor is contracted (ADR-0006 "Doğrulama / açık
         # noktalar"), this step is skipped rather than failing the build.
-        if: ${{ secrets.OPSINTEL_SIGNING_CERT_THUMBPRINT != '' }}
-        env:
-          OPSINTEL_SIGNING_CERT_THUMBPRINT: ${{ secrets.OPSINTEL_SIGNING_CERT_THUMBPRINT }}
+        if: env.SIGNING_THUMBPRINT != ''
         run: |
-          ./tools/sign.ps1 -CertificateThumbprint $env:OPSINTEL_SIGNING_CERT_THUMBPRINT
+          ./tools/sign.ps1 -CertificateThumbprint $env:SIGNING_THUMBPRINT
 
       - name: Skip-signing notice
         shell: pwsh
-        if: ${{ secrets.OPSINTEL_SIGNING_CERT_THUMBPRINT == '' }}
+        if: env.SIGNING_THUMBPRINT == ''
         run: |
           Write-Warning "OPSINTEL_SIGNING_CERT_THUMBPRINT secret is not set — uploading an UNSIGNED MSI. See ADR-0006 (signing vendor selection pending)."
 
@@ -131,13 +131,207 @@ jobs:
           if-no-files-found: ignore
           retention-days: 14
 
-  # Pester install-matrix execution (tests/installer/Install.Tests.ps1) is
-  # intentionally NOT wired into this job yet: it needs a genuinely clean
-  # machine (services/registry/certs/firewall must start from nothing), which
-  # an ephemeral windows-latest runner arguably provides, but this has not
-  # been spike-verified (msi_kurulum_dagitim.md §9 Gaps: "Nested
-  # virtualization / Windows Sandbox support on GitHub-hosted Windows runners
-  # was not verified"). TODO(Faz 0 spike A): add a `pester-install-matrix` job
-  # here once that is confirmed, or move it to a self-hosted Hyper-V runner
-  # for the N-1 upgrade scenario, which needs a snapshot of the previous
-  # release and cannot run on a stateless hosted runner at all.
+  install-smoke:
+    name: Install + smoke test MSI
+    needs: build-msi
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download MSI artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: OpsIntel-x64-msi
+          path: .
+
+      - name: Install OpsIntel silently
+        id: install
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $msi = Join-Path $PWD 'OpsIntel-x64.msi'
+          if (-not (Test-Path $msi)) {
+            throw "Downloaded artifact does not contain OpsIntel-x64.msi"
+          }
+
+          $logPath = Join-Path $PWD 'install.log'
+          # No TENANT_ID/CLIENT_ID on purpose: this exercises the "not
+          # configured" path (item 4 of the OpsIntel Faz 0 review) — the Host
+          # must still start and answer /health/live with an empty ClientId.
+          $args = @('/i', "`"$msi`"", '/qn', '/norestart', 'PORT=6500', '/l*v', "`"$logPath`"")
+          $proc = Start-Process msiexec.exe -ArgumentList $args -Wait -PassThru
+          Write-Host "msiexec exit code: $($proc.ExitCode)"
+          if ($proc.ExitCode -notin @(0, 3010)) {
+            Get-Content $logPath -Tail 200 | Write-Host
+            throw "msiexec /i failed with exit code $($proc.ExitCode)"
+          }
+
+      - name: Wait for services to be Running
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          function Wait-ServiceRunning([string]$name, [int]$timeoutSeconds = 60) {
+            $deadline = (Get-Date).AddSeconds($timeoutSeconds)
+            while ((Get-Date) -lt $deadline) {
+              $svc = Get-Service -Name $name -ErrorAction SilentlyContinue
+              if ($svc -and $svc.Status -eq 'Running') {
+                Write-Host "$name is Running"
+                return
+              }
+              Start-Sleep -Seconds 2
+            }
+            $svc = Get-Service -Name $name -ErrorAction SilentlyContinue
+            $status = if ($svc) { $svc.Status } else { '<not found>' }
+            throw "Service '$name' did not reach Running within ${timeoutSeconds}s (last status: $status)"
+          }
+
+          Wait-ServiceRunning -Name 'OpsIntel.Host'
+          Wait-ServiceRunning -Name 'OpsIntel.AI'
+
+      - name: Check port 6500 is listening on loopback
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $result = Test-NetConnection -ComputerName 127.0.0.1 -Port 6500
+          if (-not $result.TcpTestSucceeded) {
+            throw "Port 6500 is not reachable on 127.0.0.1"
+          }
+          Write-Host "127.0.0.1:6500 is reachable."
+
+      - name: Check port 6500 is NOT bound on 0.0.0.0 (ADR-0003 loopback-only)
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $anyBind = Get-NetTCPConnection -LocalPort 6500 -State Listen -ErrorAction SilentlyContinue |
+            Where-Object { $_.LocalAddress -in @('0.0.0.0', '::') }
+          if ($anyBind) {
+            $anyBind | Format-Table | Out-String | Write-Host
+            throw "OpsIntel.Host is bound on a wildcard address; ADR-0003 requires loopback-only binding."
+          }
+          Write-Host "Confirmed: no listener on 0.0.0.0/[::] for port 6500."
+
+      - name: GET /health/live over HTTPS (self-signed, -k)
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $maxAttempts = 15
+          for ($i = 1; $i -le $maxAttempts; $i++) {
+            try {
+              $status = & curl.exe -k -s -o NUL -w "%{http_code}" https://localhost:6500/health/live
+              if ($status -eq '200') {
+                Write-Host "health/live returned 200 (attempt $i)"
+                exit 0
+              }
+              Write-Host "Attempt $i`: got HTTP $status, retrying..."
+            } catch {
+              Write-Host "Attempt $i`: request failed ($_), retrying..."
+            }
+            Start-Sleep -Seconds 3
+          }
+          throw "https://localhost:6500/health/live did not return 200 after $maxAttempts attempts"
+
+      - name: Check certificate chain trust (informational, non-fatal)
+        shell: pwsh
+        continue-on-error: true
+        run: |
+          # Without -k: curl fails if the cert chain is not trusted. The
+          # self-signed dev certificate OpsIntel.SetupHelper provisions is
+          # trusted into LocalMachine\Root by CertificateInstaller, so this is
+          # expected to succeed — but this step must never fail the build on
+          # its own; it only reports what it finds (task explicitly asks for
+          # "report but don't fail if untrusted").
+          & curl.exe -s -o NUL -w "certificate chain trust check: HTTP %{http_code}, ssl_verify_result %{ssl_verify_result}`n" https://localhost:6500/health/live
+          if ($LASTEXITCODE -ne 0) {
+            Write-Warning "curl.exe (no -k) failed with exit code $LASTEXITCODE — certificate chain is not trusted by this process. Logged, not failing the build."
+          }
+
+      - name: Uninstall OpsIntel silently
+        if: always() && steps.install.outcome == 'success'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $msi = Join-Path $PWD 'OpsIntel-x64.msi'
+          $logPath = Join-Path $PWD 'uninstall.log'
+          $args = @('/x', "`"$msi`"", '/qn', '/norestart', '/l*v', "`"$logPath`"")
+          $proc = Start-Process msiexec.exe -ArgumentList $args -Wait -PassThru
+          Write-Host "msiexec /x exit code: $($proc.ExitCode)"
+          if ($proc.ExitCode -notin @(0, 3010)) {
+            Get-Content $logPath -Tail 200 | Write-Host
+            throw "msiexec /x failed with exit code $($proc.ExitCode)"
+          }
+
+      - name: Assert services removed and ProgramData retained
+        if: always() && steps.install.outcome == 'success'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $failures = @()
+
+          foreach ($name in @('OpsIntel.Host', 'OpsIntel.AI')) {
+            $svc = Get-Service -Name $name -ErrorAction SilentlyContinue
+            if ($svc) {
+              $failures += "Service '$name' still present after uninstall (status: $($svc.Status))"
+            }
+          }
+
+          $dataDir = Join-Path $env:ProgramData 'OpsIntel'
+          if (-not (Test-Path $dataDir)) {
+            $failures += "ProgramData\OpsIntel was removed on a plain uninstall (REMOVE_DATA was not set) — data should be retained."
+          } else {
+            Write-Host "ProgramData\OpsIntel retained as expected."
+          }
+
+          if ($failures.Count -gt 0) {
+            $failures | ForEach-Object { Write-Host "FAIL: $_" }
+            throw ($failures -join '; ')
+          }
+
+      - name: Collect service Application-log excerpts
+        if: always()
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'SilentlyContinue'
+          foreach ($source in @('OpsIntel.Host', 'OpsIntel.AI')) {
+            $out = Join-Path $PWD "eventlog-$source.txt"
+            Get-WinEvent -FilterHashtable @{ LogName = 'Application'; ProviderName = $source } -MaxEvents 200 -ErrorAction SilentlyContinue |
+              Sort-Object TimeCreated |
+              Format-Table TimeCreated, Id, LevelDisplayName, Message -Wrap |
+              Out-String -Width 300 |
+              Out-File -FilePath $out -Encoding utf8
+          }
+
+      - name: Collect Host log files
+        if: always()
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'SilentlyContinue'
+          $logsDir = Join-Path $env:ProgramData 'OpsIntel\logs'
+          $dest = Join-Path $PWD 'host-logs'
+          if (Test-Path $logsDir) {
+            Copy-Item -Path $logsDir -Destination $dest -Recurse -Force
+          } else {
+            New-Item -ItemType Directory -Path $dest -Force | Out-Null
+            "ProgramData\OpsIntel\logs did not exist at collection time." | Out-File (Join-Path $dest 'MISSING.txt')
+          }
+
+      - name: Upload install-smoke diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: install-smoke-diagnostics
+          path: |
+            install.log
+            uninstall.log
+            eventlog-*.txt
+            host-logs/**
+          if-no-files-found: warn
+          retention-days: 14
+
+  # Pester install-matrix execution (tests/installer/Install.Tests.ps1) covers
+  # a superset of the install-smoke job above (N-1 upgrade, repair) and is
+  # intentionally NOT wired in as a required job yet: the upgrade/repair
+  # scenarios need a snapshot of a previous release, which does not exist for
+  # this Faz 0 skeleton (msi_kurulum_dagitim.md §9 Gaps). TODO(Faz 0 spike A):
+  # wire Invoke-Pester -Path tests/installer/Install.Tests.ps1 -Tag Upgrade,Repair
+  # once an N-1 build is available, or move it to a self-hosted Hyper-V runner.

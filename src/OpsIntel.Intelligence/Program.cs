@@ -5,8 +5,19 @@ using OpsIntel.AI.Extraction;
 using OpsIntel.Intelligence;
 using OpsIntel.Observability;
 using OpsIntel.Platform.Abstractions;
+using OpsIntel.Platform.Windows;
 
 var hostBuilder = Host.CreateDefaultBuilder(args)
+    .ConfigureAppConfiguration(config =>
+    {
+        // MSI-provisioned config (installer/Config.wxs writes HKLM\SOFTWARE\OpsIntel): lower
+        // precedence than environment variables, higher than appsettings.json. No-op on
+        // non-Windows.
+        if (OperatingSystem.IsWindows())
+        {
+            config.AddOpsIntelWindowsRegistryConfiguration();
+        }
+    })
     .UseWindowsService()
     .AddOpsIntelObservability("OpsIntel.Intelligence")
     .ConfigureServices((context, services) =>

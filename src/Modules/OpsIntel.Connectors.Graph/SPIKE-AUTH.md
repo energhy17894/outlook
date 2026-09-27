@@ -61,9 +61,11 @@ code, not something this spike needed to re-verify.
 ## Redirect URI
 
 The connector registers a **fixed, path-bearing** redirect URI
-(`http://localhost:6500/auth/callback` by default, see `GraphAuthOptions.RedirectUri`), not the
-bare `http://localhost` form ADR-0007 mentions. Entra's "ignore the port" special case for
-loopback redirect URIs exists for desktop apps that spin up a *new, ephemeral* loopback listener
+(`https://localhost:6500/auth/callback` by default — Host is HTTPS-only, ADR-0003/ADR-0004; the
+port is derived from the configured Kestrel port if `GraphAuthOptions.RedirectUri` is left empty,
+see `GraphAuthRedirectUriResolver`), not the bare `http://localhost` form ADR-0007 mentions.
+Entra's "ignore the port" special case for loopback redirect URIs exists for desktop apps that
+spin up a *new, ephemeral* loopback listener
 on a random port for each interactive sign-in. Host is the opposite: a single, already-running,
 persistent local service listening on a known, configured port. There's nothing to be
 port-agnostic about, so this connector just registers the exact URI Host is already listening on.

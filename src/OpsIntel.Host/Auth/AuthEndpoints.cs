@@ -46,6 +46,10 @@ public static class AuthEndpoints
         {
             return Results.Problem("Timed out building the Entra authorization request.", statusCode: StatusCodes.Status504GatewayTimeout);
         }
+        catch (GraphAuthNotConfiguredException ex)
+        {
+            return Results.Problem(ex.Message, statusCode: StatusCodes.Status503ServiceUnavailable);
+        }
     }
 
     private static async Task<IResult> HandleCallbackAsync(
@@ -67,11 +71,19 @@ public static class AuthEndpoints
         context.Response.Cookies.Delete(StateCookieName);
 
         var callbackUri = new Uri($"{context.Request.Scheme}://{context.Request.Host}{context.Request.Path}{context.Request.QueryString}");
-        var outcome = await authService.CompleteInteractiveLoginAsync(state, callbackUri, cancellationToken);
 
-        return outcome.Success
-            ? Results.Redirect("/")
-            : Results.Problem($"Sign-in failed: {outcome.ErrorMessage}", statusCode: StatusCodes.Status401Unauthorized);
+        try
+        {
+            var outcome = await authService.CompleteInteractiveLoginAsync(state, callbackUri, cancellationToken);
+
+            return outcome.Success
+                ? Results.Redirect("/")
+                : Results.Problem($"Sign-in failed: {outcome.ErrorMessage}", statusCode: StatusCodes.Status401Unauthorized);
+        }
+        catch (GraphAuthNotConfiguredException ex)
+        {
+            return Results.Problem(ex.Message, statusCode: StatusCodes.Status503ServiceUnavailable);
+        }
     }
 
     private static async Task<IResult> HandleLogoutAsync(IGraphAuthService authService, CancellationToken cancellationToken)

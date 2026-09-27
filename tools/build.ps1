@@ -52,6 +52,7 @@ $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 
 $RepoRoot = Resolve-Path (Join-Path $PSScriptRoot '..')
+$WebDir = Join-Path $RepoRoot 'src\web'
 $ArtifactsDir = Join-Path $RepoRoot 'artifacts\publish'
 $HostPublishDir = Join-Path $ArtifactsDir 'OpsIntel.Host'
 $IntelligencePublishDir = Join-Path $ArtifactsDir 'OpsIntel.Intelligence'
@@ -75,6 +76,45 @@ function Invoke-Step {
 }
 
 if (-not $SkipPublish) {
+    # Optional SPA build (src/web -> src/OpsIntel.Host/wwwroot, harvested into the MSI by
+    # Folders.wxs as part of PublishDirHost's own publish output). Not required for the Faz 0
+    # MSI skeleton — Host already ships a placeholder wwwroot/index.html — so this only builds
+    # the real SPA when the tooling to do so is actually present, and skips gracefully (with a
+    # warning, not a failure) otherwise: a CI runner or dev box without Node/pnpm must still be
+    # able to build the installer.
+    if (Test-Path (Join-Path $WebDir 'package.json')) {
+        $node = Get-Command node -ErrorAction SilentlyContinue
+        if (-not $node) {
+            Write-Warning "Node.js was not found on PATH; skipping the src/web SPA build. Host will ship whatever is already in src/OpsIntel.Host/wwwroot."
+        }
+        else {
+            $pnpm = Get-Command pnpm -ErrorAction SilentlyContinue
+            if (-not $pnpm) {
+                # corepack ships with Node >= 16.9 but must be enabled once before `pnpm` is a
+                # real command; do this defensively rather than assuming CI already ran it.
+                Invoke-Step "Enable corepack (pnpm)" { corepack enable }
+                $pnpm = Get-Command pnpm -ErrorAction SilentlyContinue
+            }
+
+            if (-not $pnpm) {
+                Write-Warning "pnpm was not found (and could not be enabled via corepack); skipping the src/web SPA build."
+            }
+            else {
+                Invoke-Step "pnpm install (src/web)" {
+                    Push-Location $WebDir
+                    try { pnpm install --frozen-lockfile } finally { Pop-Location }
+                }
+                Invoke-Step "pnpm build:host (src/web -> src/OpsIntel.Host/wwwroot)" {
+                    Push-Location $WebDir
+                    try { pnpm run build:host } finally { Pop-Location }
+                }
+            }
+        }
+    }
+    else {
+        Write-Host "==> src/web not present; skipping the optional SPA build." -ForegroundColor Yellow
+    }
+
     if (-not (Test-Path $HostProject)) {
         throw "OpsIntel.Host project not found at '$HostProject'. It is owned by a parallel workstream (src/OpsIntel.Host) — build it first, or pass -SkipPublish to reuse an existing artifacts\publish\ tree."
     }

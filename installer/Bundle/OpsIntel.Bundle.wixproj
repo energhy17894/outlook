@@ -12,6 +12,14 @@
     <OutputType>Bundle</OutputType>
     <InstallerPlatform>x64</InstallerPlatform>
     <Version Condition="'$(Version)'==''">0.1.0</Version>
+    <!--
+      Bundle.wxs's <Bundle Version="$(var.ProductVersion)"> needs this preprocessor variable.
+      WixToolset.Sdk auto-defines $(var.Configuration)/$(var.InstallerPlatform)/$(var.Platform)/
+      etc. (see its _CreateProjectDefineConstants target) but NOT arbitrary custom ones —
+      ProductVersion must be defined explicitly, exactly as OpsIntel.Installer.wixproj already
+      does for Package.wxs's own $(var.ProductVersion) reference.
+    -->
+    <DefineConstants>ProductVersion=$(Version)</DefineConstants>
   </PropertyGroup>
 
   <ItemGroup>
