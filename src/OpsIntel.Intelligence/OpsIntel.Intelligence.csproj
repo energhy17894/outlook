@@ -3,6 +3,12 @@
   <PropertyGroup>
     <TargetFramework>net10.0-windows</TargetFramework>
     <RootNamespace>OpsIntel.Intelligence</RootNamespace>
+    <!-- Transitively pulls in Microsoft.AI.Foundry.Local (via OpsIntel.AI.Extraction), whose
+         runtime package ships only RID-specific native assets — see that project's csproj
+         and SPIKE-FOUNDRY-LOCAL.md. Declaring both RIDs here lets restore/build succeed on
+         both this Linux dev/CI environment and the Windows production target without a
+         `-r` flag. -->
+    <RuntimeIdentifiers>linux-x64;win-x64</RuntimeIdentifiers>
   </PropertyGroup>
 
   <ItemGroup>

@@ -19,6 +19,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- So the test project can construct extractors against a test-controlled PromptSetLoader
+         directly, without needing to fake IOptions<ExtractionOptions>. -->
+    <InternalsVisibleTo Include="OpsIntel.AI.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.AI" />
     <PackageReference Include="Microsoft.Extensions.AI.Abstractions" />
     <PackageReference Include="Microsoft.Extensions.AI.OpenAI" />
