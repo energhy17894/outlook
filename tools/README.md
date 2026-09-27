@@ -1,6 +1,8 @@
 # tools/
 
-> **Durum:** Planlama aşaması — bu dizinde henüz betik yoktur. Betikler **Faz 0**'da CI iskeletiyle birlikte eklenecektir.
+> **Durum:** Faz 0 iskeleti — Derleme ve imzalama betikleri eklendi (Faz 0 tamamlandı).
+
+Bu dizin yerel derleme, imzalama, geliştirici ortamı kurulumu ve sentetik test verisi üretimi betiklerini barındırır.
 
 Kaynak: [araştırma raporu §5](../docs/research/rapor-m365-operasyon-zekasi-platform-plani.md).
 

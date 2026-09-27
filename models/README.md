@@ -1,6 +1,6 @@
 # models/
 
-> **Durum:** Planlama aşaması — `model-manifest.json` **S4**'te (AI servisi temeli) eklenecektir. Model seçimi Faz 0 spike C ve E sonuçlarına bağlıdır.
+> **Durum:** Faz 0 iskeleti — `model-manifest.json` eklendi (spike C ve E validasyondadır).
 
 Bu dizin **yalnızca model manifestini** tutar: sabitlenmiş model kimlikleri ve **SHA-256** hash'leri. **Model ikili dosyaları depoya konmaz** (`.gitignore` `*.onnx`, `*.gguf`, `*.safetensors` dosyalarını dışlar). Kaynak: [araştırma raporu §1, §5](../docs/research/rapor-m365-operasyon-zekasi-platform-plani.md), [ADR-0014](../docs/adr/0014-foundry-local-model-hosting.md).
 

@@ -1,8 +1,8 @@
 # installer/
 
-> **Durum:** Planlama aşaması — bu dizinde henüz WiX projesi yoktur. Walking skeleton **Faz 0 spike A**'da, MSI v0.1 **S1**'de oluşturulacaktır.
+> **Durum:** Faz 0 iskeleti — WiX v7 walking skeleton eklendi (spike A tamamlandı).
 
-Bu dizin tek MSI (`OpsIntel-x64.msi`) ve opsiyonel Burn bundle (`OpsIntelSetup.exe`) kaynaklarını barındıracaktır. Ayrıntı: [docs/operations/installation.md](../docs/operations/installation.md), [ADR-0005](../docs/adr/0005-single-msi-wix-v7.md). Kaynak: [araştırma raporu §2, §5](../docs/research/rapor-m365-operasyon-zekasi-platform-plani.md).
+Bu dizin tek MSI (`OpsIntel-x64.msi`) ve opsiyonel Burn bundle (`OpsIntelSetup.exe`) kaynaklarını barındırır. Skeleton makineler, yerel HTTPS sertifikası, iki servisi ve yönetilen ödünç kurma gerçekleştirir. Gerçek Windows Server kurulum testleri Faz 1'de tamamlanacaktır. Ayrıntı: [docs/operations/installation.md](../docs/operations/installation.md), [ADR-0005](../docs/adr/0005-single-msi-wix-v7.md). Kaynak: [araştırma raporu §2, §5](../docs/research/rapor-m365-operasyon-zekasi-platform-plani.md).
 
 ## Planlanan yapı
 

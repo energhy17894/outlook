@@ -1,6 +1,8 @@
 # tests/
 
-> **Durum:** Planlama aşaması — bu dizinde henüz test yoktur. Test projeleri **Faz 0**'da iskeletle birlikte oluşturulacaktır.
+> **Durum:** Faz 0 iskeleti — Birim, mimari ve değerlendirme testleri eklendi (112 test geçti).
+
+Bu dizin birim, entegrasyon, mimari, sözleşme, e2e, performans, kurulum ve değerlendirme testlerini barındırır. Skeleton validasyonu tamamlanmıştır.
 
 Kaynak: [araştırma raporu §5, §6](../docs/research/rapor-m365-operasyon-zekasi-platform-plani.md). Kalite hedefleri: [docs/roadmap/quality-targets.md](../docs/roadmap/quality-targets.md).
 

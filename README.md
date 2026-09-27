@@ -2,8 +2,8 @@
 
 **OpsIntel**, Microsoft 365 kiracısındaki e-posta, SharePoint/OneDrive belgeleri ve takvim verisinden kurumun operasyonel kaydını çıkaran, **Windows'a yerel olarak kurulan** bir "kurumsal operasyon zekâsı" web uygulaması ve posta ajanıdır. Kararları, riskleri, açık soruları, taahhütleri, talepleri, proje aşamalarını ve olay akışlarını **kaynağa bağlı alıntı kanıtıyla** birinci sınıf kayıtlar olarak tutar. Her dışa dönük aksiyonu (yanıt taslağı, görev, takvim kaydı) yalnızca kullanıcı onayından sonra yürütür ve her adımı denetim kaydına yazar. Konumlandırma cümlesi: **"Şirketin operasyonel hafızası, kendi makinenizde."**
 
-> **Durum: Planlama aşaması — henüz kod yok.**
-> Bu depo şu anda yalnızca araştırma raporunu, mimari karar kayıtlarını (ADR), yol haritasını ve uyum/işletim dokümanlarını içerir. Kod, Faz 0 (5–23 Ekim 2026) ile birlikte eklenecektir.
+> **Durum: Faz 0 iskeleti — Kod eklendi (5–23 Ekim 2026).**
+> Bu depo araştırma raporunu, mimari karar kayıtlarını (ADR), yol haritasını, uyum/işletim dokümanlarını ve Faz 0 keşif döneminde oluşturulan walking skeleton kodunu içerir. Skeleton spike'lar validasyondadır; kod üretim hazırlığında değildir.
 
 ## Temel kısıtlar
 
@@ -92,19 +92,19 @@ flowchart LR
 opsintel/
 ├─ .github/
 │  ├─ ISSUE_TEMPLATE/ PULL_REQUEST_TEMPLATE.md       [mevcut]
-│  ├─ workflows/ (ci, installer, eval, codeql, release) [Faz 0]
-│  └─ CODEOWNERS  dependabot.yml                      [Faz 0]
+│  ├─ workflows/ (ci, installer, eval, codeql, release) [mevcut]
+│  └─ CODEOWNERS  dependabot.yml                      [mevcut]
 ├─ docs/
 │  ├─ adr/  architecture/  compliance/  operations/   [mevcut]
 │  ├─ product/  roadmap/  research/                   [mevcut]
 │  └─ api/ (üretilmiş openapi.json)                   [sonra]
-├─ src/          README.md [mevcut]; projeler         [Faz 0]
-├─ installer/    README.md [mevcut]; WiX projeleri    [Faz 0]
-├─ tests/        README.md [mevcut]; test projeleri   [Faz 0]
+├─ src/          README.md [mevcut]; projeler         [mevcut]
+├─ installer/    README.md [mevcut]; WiX projeleri    [mevcut]
+├─ tests/        README.md [mevcut]; test projeleri   [mevcut]
 ├─ prompts/      README.md [mevcut]; şablonlar         [S5]
-├─ models/       README.md [mevcut]; model-manifest.json [S4]
-├─ tools/        README.md [mevcut]; betikler         [Faz 0]
-├─ global.json  Directory.Build.props  Directory.Packages.props  OpsIntel.slnx [Faz 0]
+├─ models/       README.md [mevcut]; model-manifest.json [mevcut]
+├─ tools/        README.md [mevcut]; betikler         [mevcut]
+├─ global.json  Directory.Build.props  Directory.Packages.props  OpsIntel.slnx [mevcut]
 ├─ .editorconfig  .gitignore                          [mevcut]
 └─ README.md  SECURITY.md  CONTRIBUTING.md  CHANGELOG.md [mevcut]
    THIRD-PARTY-NOTICES.md  LICENSE                    [sonra; lisans henüz belirlenmedi]
@@ -146,6 +146,30 @@ Ayrıntı: [docs/roadmap/roadmap.md](docs/roadmap/roadmap.md).
 | E | Türkçe çıkarım ön ölçümü (50 başlık; Qwen3.5-9B / Gemma 4 12B / Qwen3-30B-A3B / bulut modeli) | CPU'lu makineler için katman politikası belirlenir |
 
 Ek Faz 0 işleri: Entra uygulama kaydı, depo ve CI iskeleti, ADR 0001–0012'nin kesinleştirilmesi, KVKK iş paketinin başlatılması, altın set için rıza ve maskeleme prosedürü.
+
+## Hızlı başlangıç
+
+Faz 0 skeleton'u derlemek ve test etmek için:
+
+```bash
+# .NET projeleri, birim/entegrasyon/mimari testleri derle ve çalıştır
+dotnet build OpsIntel.slnx
+dotnet test OpsIntel.slnx
+
+# React web SPA'yı çalıştır
+cd src/web
+pnpm install
+pnpm dev
+
+# Değerlendirme/sentetik testleri çalıştır (Linux/macOS)
+cd tests/eval
+python3 run_eval.py --predictions baseline_predictions.json
+
+# Windows'ta MSI'yı derle ve imzala
+pwsh tools/build.ps1   # veya ./tools/sign.ps1
+```
+
+**Not:** Skeleton henüz MSI kurulum testleri, NT SERVICE hesapları, Foundry Local servis modu, gerçek Entra tenant'ı ve real Outlook veri erişimi gerektirmez. Bkz. [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Katkı ve güvenlik
 

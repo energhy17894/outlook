@@ -1,6 +1,8 @@
 # prompts/
 
-> **Durum:** Planlama aşaması — bu dizinde henüz prompt yoktur. İlk şablonlar **S4–S5**'te (triage ve kanıtlı çıkarım) eklenecektir; biçim Faz 0'da kararlaştırılacaktır.
+> **Durum:** Faz 0 iskeleti — İlk prompt şablonları eklendi (S4–S5 planlanmıştır).
+
+Bu dizin `prompts/extraction/v1` altında sürümlenmiş prompt şablonları içerir. Promptlar kod gibi ele alınır ve **kod incelemesinden geçer**.
 
 Bu dizin **sürümlenmiş prompt şablonlarını ve çıkarım JSON şemalarını** tutar. Promptlar kod gibi ele alınır ve **kod incelemesinden geçer**. Kaynak: [araştırma raporu §1, §5](../docs/research/rapor-m365-operasyon-zekasi-platform-plani.md), [ADR-0015](../docs/adr/0015-extraction-contract-evidence.md).
 
