@@ -76,7 +76,7 @@ $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 
 $RepoRoot = Resolve-Path (Join-Path $PSScriptRoot '..')
-$MsiPath = Join-Path $RepoRoot "installer\bin\x64\$Configuration\OpsIntel-x64.msi"
+$MsiPath = Join-Path $RepoRoot "artifacts\installer\OpsIntel-x64.msi"  # copied here by tools/build.ps1
 $BundlePath = Join-Path $RepoRoot "installer\Bundle\bin\x64\$Configuration\OpsIntelSetup.exe"
 $HostPublishDir = Join-Path $RepoRoot 'artifacts\publish\OpsIntel.Host'
 $IntelligencePublishDir = Join-Path $RepoRoot 'artifacts\publish\OpsIntel.Intelligence'

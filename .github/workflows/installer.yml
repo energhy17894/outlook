@@ -107,7 +107,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: OpsIntel-x64-msi
-          path: installer/bin/x64/Release/OpsIntel-x64.msi
+          path: artifacts/installer/OpsIntel-x64.msi
           if-no-files-found: error
           retention-days: 30
 
@@ -159,8 +159,8 @@ jobs:
           # No TENANT_ID/CLIENT_ID on purpose: this exercises the "not
           # configured" path (item 4 of the OpsIntel Faz 0 review) — the Host
           # must still start and answer /health/live with an empty ClientId.
-          $args = @('/i', "`"$msi`"", '/qn', '/norestart', 'PORT=6500', '/l*v', "`"$logPath`"")
-          $proc = Start-Process msiexec.exe -ArgumentList $args -Wait -PassThru
+          $msiArgs = @('/i', "`"$msi`"", '/qn', '/norestart', 'PORT=6500', '/l*v', "`"$logPath`"")
+          $proc = Start-Process msiexec.exe -ArgumentList $msiArgs -Wait -PassThru
           Write-Host "msiexec exit code: $($proc.ExitCode)"
           if ($proc.ExitCode -notin @(0, 3010)) {
             Get-Content $logPath -Tail 200 | Write-Host
@@ -253,8 +253,8 @@ jobs:
           $ErrorActionPreference = 'Stop'
           $msi = Join-Path $PWD 'OpsIntel-x64.msi'
           $logPath = Join-Path $PWD 'uninstall.log'
-          $args = @('/x', "`"$msi`"", '/qn', '/norestart', '/l*v', "`"$logPath`"")
-          $proc = Start-Process msiexec.exe -ArgumentList $args -Wait -PassThru
+          $msiArgs = @('/x', "`"$msi`"", '/qn', '/norestart', '/l*v', "`"$logPath`"")
+          $proc = Start-Process msiexec.exe -ArgumentList $msiArgs -Wait -PassThru
           Write-Host "msiexec /x exit code: $($proc.ExitCode)"
           if ($proc.ExitCode -notin @(0, 3010)) {
             Get-Content $logPath -Tail 200 | Write-Host

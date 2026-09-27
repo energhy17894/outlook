@@ -178,7 +178,20 @@ if ($Bundle) {
     }
 }
 
-Write-Host "==> Build complete. MSI: installer\bin\x64\$Configuration\OpsIntel-x64.msi" -ForegroundColor Green
+# The WiX SDK's output folder layout (platform / configuration / culture subfolders)
+# differs between versions, so locate the MSI instead of assuming a path, and copy it
+# to a stable location that CI and the docs can rely on: artifacts\installer\.
+$builtMsi = Get-ChildItem -Path (Join-Path $RepoRoot 'installer\bin') -Filter 'OpsIntel-x64.msi' -Recurse -File |
+    Sort-Object LastWriteTime -Descending |
+    Select-Object -First 1
+if (-not $builtMsi) {
+    throw "WiX build reported success but no OpsIntel-x64.msi was found under installer\bin."
+}
+$installerOutDir = Join-Path $RepoRoot 'artifacts\installer'
+New-Item -ItemType Directory -Force -Path $installerOutDir | Out-Null
+$msiPath = Join-Path $installerOutDir 'OpsIntel-x64.msi'
+Copy-Item -Path $builtMsi.FullName -Destination $msiPath -Force
+Write-Host "==> Build complete. MSI: $msiPath (built at $($builtMsi.FullName))" -ForegroundColor Green
 if ($Bundle) {
     Write-Host "==> Bundle: installer\Bundle\bin\x64\$Configuration\OpsIntelSetup.exe" -ForegroundColor Green
 }
