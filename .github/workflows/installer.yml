@@ -63,7 +63,6 @@ jobs:
           # present; corepack ships with Node (preinstalled on windows-latest)
           # but pnpm itself must be enabled once before it is callable.
           corepack enable
-          corepack prepare pnpm@latest --activate
 
       - name: Compute build version
         id: version

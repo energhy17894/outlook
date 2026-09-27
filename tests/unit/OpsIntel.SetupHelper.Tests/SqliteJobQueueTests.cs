@@ -18,7 +18,7 @@ public sealed class SqliteJobQueueTests : IDisposable
     public SqliteJobQueueTests()
     {
         _dbPath = Path.Combine(Path.GetTempPath(), $"opsintel-jobqueue-tests-{Guid.NewGuid():N}.db");
-        _dbContext = OpsIntelDbContextFactory.Create($"Data Source={_dbPath}");
+        _dbContext = OpsIntelDbContextFactory.Create($"Data Source={_dbPath};Pooling=False");
         _time = new TestTimeProvider(new DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero));
         _queue = new SqliteJobQueue(_dbContext, _time);
     }
