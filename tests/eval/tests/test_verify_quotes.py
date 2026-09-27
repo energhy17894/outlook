@@ -37,7 +37,7 @@ def test_turkish_dotted_capital_i_folds_to_dotted_lowercase_i():
 
 def test_turkish_undotted_capital_i_folds_to_dotless_i():
     # 'I' (U+0049) must fold to 'ı' (U+0131) under Turkish rules, not to plain 'i'.
-    source = "PROJE ISIK durumu güncellendi."
+    source = "PROJE IŞIK durumu güncellendi."
     # 'IŞIK' folded the Turkish way is 'ışık'; matching against that must succeed.
     quote = "proje ışık durumu"
     result = verify_quote(source, quote)
