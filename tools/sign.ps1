@@ -187,13 +187,4 @@ if ($Bundle) {
     }
 }
 
-function Invoke-Step {
-    param([string]$Description, [scriptblock]$Action)
-    Write-Host "==> $Description" -ForegroundColor Cyan
-    & $Action
-    if ($LASTEXITCODE -and $LASTEXITCODE -ne 0) {
-        throw "Step failed with exit code ${LASTEXITCODE}: $Description"
-    }
-}
-
 Write-Host "==> Signing complete." -ForegroundColor Green
