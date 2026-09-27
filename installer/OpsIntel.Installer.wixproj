@@ -1,0 +1,34 @@
+<Project Sdk="WixToolset.Sdk/7.0.0">
+
+  <PropertyGroup>
+    <OutputName>OpsIntel-x64</OutputName>
+    <OutputType>Package</OutputType>
+    <InstallerPlatform>x64</InstallerPlatform>
+    <!-- MSBuild property overridable from CI: tools/build.ps1 passes -p:Version=$(ver) -->
+    <Version Condition="'$(Version)'==''">0.1.0</Version>
+    <DefineConstants>
+      PublishDirHost=$(OpsIntelHostPublishDir);
+      PublishDirIntelligence=$(OpsIntelIntelligencePublishDir);
+      PublishDirSetupHelper=$(OpsIntelSetupHelperPublishDir);
+      ProductVersion=$(Version)
+    </DefineConstants>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- ADR-0005: Util for PermissionEx/ServiceConfig/RemoveFolderEx/EventSource/XmlFile,
+         Firewall for the LAN-only exception. Both must match the WiX v7.0.x line. -->
+    <PackageReference Include="WixToolset.Util.wixext" Version="7.0.0" />
+    <PackageReference Include="WixToolset.Firewall.wixext" Version="7.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="Package.wxs" />
+    <Compile Include="Folders.wxs" />
+    <Compile Include="Services.wxs" />
+    <Compile Include="Config.wxs" />
+    <Compile Include="Cert.wxs" />
+    <Compile Include="Firewall.wxs" />
+    <Compile Include="Shortcut.wxs" />
+  </ItemGroup>
+
+</Project>

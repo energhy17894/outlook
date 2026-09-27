@@ -1,0 +1,31 @@
+<Project>
+  <!--
+    ADR-0005: WiX v7 SDK, single MSI, zero external prerequisites.
+    v7 refuses to build without an explicit EULA acceptance gesture (OSMF).
+    See docs/adr/0005-single-msi-wix-v7.md and research notes msi_kurulum_dagitim.md §1.
+  -->
+  <PropertyGroup>
+    <AcceptEula>wix7</AcceptEula>
+
+    <!-- Pin the WiX SDK to a 7.0.x line; do not float to 'latest' major. -->
+    <WixVersion>7.0.0</WixVersion>
+
+    <!-- windows-2025 GH runner image ships only WiX 3.14.1; this NuGet-restored SDK
+         is what actually gets used (tools/build.ps1 / .github/workflows/installer.yml). -->
+    <InstallerPlatform>x64</InstallerPlatform>
+    <Platforms>x64</Platforms>
+
+    <!-- Publish output locations for the two Windows services. MSBuild properties so
+         other agents / CI can override them without editing the .wixproj files. -->
+    <OpsIntelHostPublishDir Condition="'$(OpsIntelHostPublishDir)'==''">$(MSBuildThisFileDirectory)..\artifacts\publish\OpsIntel.Host\</OpsIntelHostPublishDir>
+    <OpsIntelIntelligencePublishDir Condition="'$(OpsIntelIntelligencePublishDir)'==''">$(MSBuildThisFileDirectory)..\artifacts\publish\OpsIntel.Intelligence\</OpsIntelIntelligencePublishDir>
+
+    <!-- Planned but not yet built (see src/OpsIntel.SetupHelper TODO in Cert.wxs). -->
+    <OpsIntelSetupHelperPublishDir Condition="'$(OpsIntelSetupHelperPublishDir)'==''">$(MSBuildThisFileDirectory)..\artifacts\publish\OpsIntel.SetupHelper\</OpsIntelSetupHelperPublishDir>
+
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <SuppressIces></SuppressIces>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+  </PropertyGroup>
+</Project>
