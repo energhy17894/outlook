@@ -58,6 +58,7 @@ OpsIntel planlama dokümanlarının tam dizini. Proje özeti için bkz. [kök RE
 | [operations/installation.md](operations/installation.md) | MSI'ın yaptıkları, ön gereksinimlerin kaldırılması, sertifika stratejisi, sessiz kurulum, Burn, kod imzalama |
 | [operations/intune.md](operations/intune.md) | Intune Win32/LOB dağıtımı, eşlik eden politikalar, kayıp cihaz runbook'u |
 | [operations/troubleshooting.md](operations/troubleshooting.md) | Sorun giderme (taslak başlıklar) |
+| [operations/tenant-sign-in-test.md](operations/tenant-sign-in-test.md) | Faz 0: kendi Windows PC'nizde gerçek M365 kiracınıza karşı Entra oturum açma testi |
 
 ## Ürün
 

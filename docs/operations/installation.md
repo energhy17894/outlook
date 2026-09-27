@@ -37,7 +37,7 @@ Araç: **WiX Toolset v7.0.0** (6 Nisan 2026), SDK tarzı proje, `dotnet build`. 
 | 3 | Veri klasörleri `ProgramData\OpsIntel\{config,data,blobs,logs,models,backup}` | `CreateFolder` + `util:PermissionEx` | SYSTEM/Administrators tam, servis SID'leri modify, Users yok |
 | 4 | Servisler | `ServiceInstall` + `ServiceControl Start="install" Stop="both" Remove="uninstall"` + `util:ServiceConfig` (restart/restart/none) + `ServiceDependency` | Hesap: `NT SERVICE\OpsIntel.Host` / `NT SERVICE\OpsIntel.AI`; geri dönüş `LocalService`. LocalSystem kullanılmaz |
 | 5 | Event Log kaynağı | `util:EventSource` | Yalnızca yöneticiler kaynak oluşturabilir |
-| 6 | Yapılandırma: `PORT`, `TENANTID`, `CLIENTID`, `CERT_THUMBPRINT`, `LLM_PROVIDER`, `MODEL_SOURCE`, `LAN_ENABLED` | `RegistryValue` → `HKLM\SOFTWARE\OpsIntel` + "Remember Property" | WiX'te JSON düzenleme öğesi yoktur; uygulama registry'den okur |
+| 6 | Yapılandırma: `PORT`, `TENANT_ID`, `CLIENT_ID`, `CERT_THUMBPRINT`, `LLM_PROVIDER`, `MODEL_SOURCE`, `LAN_ENABLED` | `RegistryValue` → `HKLM\SOFTWARE\OpsIntel` + "Remember Property" | WiX'te JSON düzenleme öğesi yoktur; uygulama registry'den okur |
 | 7 | HTTPS sertifikası | Ertelenmiş, `Impersonate="no"` CA → `setup-helper cert create/trust`, rollback karşılığıyla | PowerShell CA kullanılmaz; imzalı C# yardımcı çalıştırılır |
 | 8 | Sertifika yenileme görevi | CA ile SYSTEM zamanlanmış görevi (`setup-helper cert renew`, aylık) | Süresine 30 günden az kalan sertifikayı yeniler |
 | 9 | Güvenlik duvarı | `fw:FirewallException` yalnızca `LAN_ENABLED=1` (domain/private, localSubnet) | Localhost modunda kural yok |
@@ -84,7 +84,7 @@ Kestrel tuzağı: depo tabanlı sertifika yapılandırmasında `Location` varsay
 
 ```text
 msiexec /i "OpsIntel-x64.msi" /qn /norestart /l*v "%ProgramData%\OpsIntel\install.log" ^
-        PORT=6500 TENANTID=<guid> CLIENTID=<guid> CERT_THUMBPRINT=<opsiyonel> ^
+        PORT=6500 TENANT_ID=<guid> CLIENT_ID=<guid> CERT_THUMBPRINT=<opsiyonel> ^
         LLM_PROVIDER=foundry MODEL_SOURCE=\\srv\opsintel\models LAN_ENABLED=0
 
 msiexec /x "OpsIntel-x64.msi" /qn REMOVE_DATA=1        :: veriyi de silerek kaldırma
@@ -94,8 +94,8 @@ OpsIntelSetup.exe /quiet /norestart /log setup.log      :: opsiyonel Burn bundle
 | Özellik | Varsayılan | Açıklama |
 |---|---|---|
 | `PORT` | 6500 | HTTPS portu |
-| `TENANTID` | — | Entra kiracı kimliği |
-| `CLIENTID` | — | Uygulama (public client) kimliği |
+| `TENANT_ID` | — | Entra kiracı kimliği |
+| `CLIENT_ID` | — | Uygulama (public client) kimliği |
 | `CERT_THUMBPRINT` | boş | Kurumsal PKI sertifikası; boşsa makineye özel sertifika üretilir |
 | `LLM_PROVIDER` | `foundry` | Varsayılan yerel sağlayıcı |
 | `MODEL_SOURCE` | boş | Çevrimdışı model paylaşımı (UNC) |
@@ -150,3 +150,6 @@ GitHub `windows-2025` imajında yalnızca eski WiX 3.14.1 kurulu gelir; WiX v7 N
 8. `REMOVE_DATA` ile ve onsuz kaldırmada geriye servis, sertifika veya kural kalmaz.
 
 Geliştiriciler aynı testleri `.wsb` dosyasıyla Windows Sandbox'ta yerel çalıştırabilir.
+
+Gerçek bir M365 kiracısına karşı elle Entra oturum açma testi için bkz.
+[tenant-sign-in-test.md](tenant-sign-in-test.md).
