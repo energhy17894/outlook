@@ -104,7 +104,10 @@ public static class OpsIntelDbContextFactory
     public static OpsIntelDbContext Create(string sqliteConnectionString)
     {
         var options = new DbContextOptionsBuilder<OpsIntelDbContext>()
-            .UseSqlite(new SqliteConnection(sqliteConnectionString))
+            // Pass the connection string (not a SqliteConnection instance) so the context owns the
+            // connection and closes it on Dispose; otherwise the file handle outlives the context
+            // and Windows refuses to delete/move the database file.
+            .UseSqlite(sqliteConnectionString)
             .Options;
 
         var context = new OpsIntelDbContext(options);

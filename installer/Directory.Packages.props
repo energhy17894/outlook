@@ -1,0 +1,11 @@
+<Project>
+  <!--
+    The repo root enables NuGet Central Package Management for the .NET solution.
+    WiX projects pin their SDK/extension versions directly in the .wixproj files
+    (ADR-0005), so CPM is switched off for everything under installer/.
+    This file shadows the root Directory.Packages.props (nearest one wins).
+  -->
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>false</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+</Project>

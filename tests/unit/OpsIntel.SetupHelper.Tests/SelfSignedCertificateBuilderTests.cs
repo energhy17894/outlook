@@ -58,11 +58,16 @@ public sealed class SelfSignedCertificateBuilderTests
 
         Assert.Contains("localhost", sanText, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("127.0.0.1", sanText, StringComparison.Ordinal);
-        // X509Extension.Format's IPv6 rendering is platform-dependent (compressed "::1" on
-        // some OpenSSL/.NET builds, fully expanded "0:0:0:0:0:0:0:1" on others); accept either.
+        // X509Extension.Format's IPv6 rendering is platform-dependent ("::1" on Linux, fully
+        // expanded "0000:...:0001" on Windows), so parse each "IP Address=" entry instead.
+        var ipAddresses = sanText
+            .Split(',', StringSplitOptions.TrimEntries)
+            .Where(entry => entry.StartsWith("IP Address", StringComparison.OrdinalIgnoreCase))
+            .Select(entry => entry[(entry.IndexOfAny(['=', ':']) + 1)..].Trim())
+            .Select(value => System.Net.IPAddress.TryParse(value, out var ip) ? ip : null)
+            .ToList();
         Assert.True(
-            sanText.Contains("::1", StringComparison.OrdinalIgnoreCase) ||
-            sanText.Contains("0:0:0:0:0:0:0:1", StringComparison.OrdinalIgnoreCase),
+            ipAddresses.Any(ip => ip is not null && ip.Equals(System.Net.IPAddress.IPv6Loopback)),
             $"Expected an IPv6 loopback SAN entry, got: {sanText}");
         Assert.Contains("TESTMACHINE01", sanText, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("testmachine01.corp.example.com", sanText, StringComparison.OrdinalIgnoreCase);
