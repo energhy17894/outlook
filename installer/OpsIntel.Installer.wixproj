@@ -12,6 +12,14 @@
       PublishDirSetupHelper=$(OpsIntelSetupHelperPublishDir);
       ProductVersion=$(Version)
     </DefineConstants>
+    <!-- WixToolset.Sdk otherwise auto-globs every *.wxs under this project
+         directory (like the .NET SDK's default compile items), which double-
+         includes the files explicitly listed below AND pulls in
+         Bundle/Bundle.wxs — a fragment that belongs solely to
+         ../Bundle/OpsIntel.Bundle.wixproj and needs the bal extension this
+         project does not reference. Disable the glob and list this project's
+         own compile items explicitly instead. -->
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
   </PropertyGroup>
 
   <ItemGroup>

@@ -35,13 +35,15 @@
       executable must be the KeyPath of the component that carries ServiceInstall).
     -->
     <ComponentGroup Id="OpsIntel.Host.Files" Directory="HOSTDIR">
-      <Files Include="$(var.PublishDirHost)**"
-             Exclude="$(var.PublishDirHost)OpsIntel.Host.exe" />
+      <Files Include="$(var.PublishDirHost)**">
+        <Exclude Files="$(var.PublishDirHost)OpsIntel.Host.exe" />
+      </Files>
     </ComponentGroup>
 
     <ComponentGroup Id="OpsIntel.Intelligence.Files" Directory="AIDIR">
-      <Files Include="$(var.PublishDirIntelligence)**"
-             Exclude="$(var.PublishDirIntelligence)OpsIntel.Intelligence.exe" />
+      <Files Include="$(var.PublishDirIntelligence)**">
+        <Exclude Files="$(var.PublishDirIntelligence)OpsIntel.Intelligence.exe" />
+      </Files>
     </ComponentGroup>
 
     <!--
@@ -65,10 +67,10 @@
         <CreateFolder>
           <util:PermissionEx User="SYSTEM" GenericAll="yes" />
           <util:PermissionEx User="Administrators" GenericAll="yes" />
-          <util:PermissionEx User="NT SERVICE\OpsIntel.Host" Read="yes" Write="yes" Delete="yes"
+          <util:PermissionEx User="NT SERVICE\OpsIntel.Host" Read="yes" Delete="yes"
                               CreateFile="yes" CreateChild="yes" DeleteChild="yes" Traverse="yes"
                               ReadAttributes="yes" WriteAttributes="yes" ReadPermission="yes" />
-          <util:PermissionEx User="NT SERVICE\OpsIntel.AI" Read="yes" Write="yes" Delete="yes"
+          <util:PermissionEx User="NT SERVICE\OpsIntel.AI" Read="yes" Delete="yes"
                               CreateFile="yes" CreateChild="yes" DeleteChild="yes" Traverse="yes"
                               ReadAttributes="yes" WriteAttributes="yes" ReadPermission="yes" />
         </CreateFolder>
@@ -83,10 +85,10 @@
         <CreateFolder>
           <util:PermissionEx User="SYSTEM" GenericAll="yes" />
           <util:PermissionEx User="Administrators" GenericAll="yes" />
-          <util:PermissionEx User="NT SERVICE\OpsIntel.Host" Read="yes" Write="yes" Delete="yes"
+          <util:PermissionEx User="NT SERVICE\OpsIntel.Host" Read="yes" Delete="yes"
                               CreateFile="yes" CreateChild="yes" DeleteChild="yes" Traverse="yes"
                               ReadAttributes="yes" WriteAttributes="yes" ReadPermission="yes" />
-          <util:PermissionEx User="NT SERVICE\OpsIntel.AI" Read="yes" Write="yes" Delete="yes"
+          <util:PermissionEx User="NT SERVICE\OpsIntel.AI" Read="yes" Delete="yes"
                               CreateFile="yes" CreateChild="yes" DeleteChild="yes" Traverse="yes"
                               ReadAttributes="yes" WriteAttributes="yes" ReadPermission="yes" />
         </CreateFolder>
@@ -97,10 +99,10 @@
         <CreateFolder>
           <util:PermissionEx User="SYSTEM" GenericAll="yes" />
           <util:PermissionEx User="Administrators" GenericAll="yes" />
-          <util:PermissionEx User="NT SERVICE\OpsIntel.Host" Read="yes" Write="yes" Delete="yes"
+          <util:PermissionEx User="NT SERVICE\OpsIntel.Host" Read="yes" Delete="yes"
                               CreateFile="yes" CreateChild="yes" DeleteChild="yes" Traverse="yes"
                               ReadAttributes="yes" WriteAttributes="yes" ReadPermission="yes" />
-          <util:PermissionEx User="NT SERVICE\OpsIntel.AI" Read="yes" Write="yes" Delete="yes"
+          <util:PermissionEx User="NT SERVICE\OpsIntel.AI" Read="yes" Delete="yes"
                               CreateFile="yes" CreateChild="yes" DeleteChild="yes" Traverse="yes"
                               ReadAttributes="yes" WriteAttributes="yes" ReadPermission="yes" />
         </CreateFolder>
@@ -114,7 +116,7 @@
         <CreateFolder>
           <util:PermissionEx User="SYSTEM" GenericAll="yes" />
           <util:PermissionEx User="Administrators" GenericAll="yes" />
-          <util:PermissionEx User="NT SERVICE\OpsIntel.Host" Read="yes" Write="yes" Delete="yes"
+          <util:PermissionEx User="NT SERVICE\OpsIntel.Host" Read="yes" Delete="yes"
                               CreateFile="yes" CreateChild="yes" DeleteChild="yes" Traverse="yes"
                               ReadAttributes="yes" WriteAttributes="yes" ReadPermission="yes" />
         </CreateFolder>
@@ -125,7 +127,7 @@
         <CreateFolder>
           <util:PermissionEx User="SYSTEM" GenericAll="yes" />
           <util:PermissionEx User="Administrators" GenericAll="yes" />
-          <util:PermissionEx User="NT SERVICE\OpsIntel.AI" Read="yes" Write="yes" Delete="yes"
+          <util:PermissionEx User="NT SERVICE\OpsIntel.AI" Read="yes" Delete="yes"
                               CreateFile="yes" CreateChild="yes" DeleteChild="yes" Traverse="yes"
                               ReadAttributes="yes" WriteAttributes="yes" ReadPermission="yes" />
         </CreateFolder>
@@ -136,7 +138,7 @@
         <CreateFolder>
           <util:PermissionEx User="SYSTEM" GenericAll="yes" />
           <util:PermissionEx User="Administrators" GenericAll="yes" />
-          <util:PermissionEx User="NT SERVICE\OpsIntel.Host" Read="yes" Write="yes" Delete="yes"
+          <util:PermissionEx User="NT SERVICE\OpsIntel.Host" Read="yes" Delete="yes"
                               CreateFile="yes" CreateChild="yes" DeleteChild="yes" Traverse="yes"
                               ReadAttributes="yes" WriteAttributes="yes" ReadPermission="yes" />
         </CreateFolder>

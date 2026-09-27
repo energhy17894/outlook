@@ -44,10 +44,14 @@
       deferred, non-impersonated custom actions in Cert.wxs via CustomActionData.
       msiexec /i OpsIntel-x64.msi /qn PORT=6500 CERT_THUMBPRINT=... TENANT_ID=... CLIENT_ID=... ALLOW_LAN=0
     -->
+    <!-- CERT_THUMBPRINT/TENANT_ID/CLIENT_ID have no meaningful build-time default
+         (WiX v7's compiler rejects Property/@Value=""), so they are simply left
+         unset here; they resolve to an empty string at runtime exactly as before
+         unless a command-line value or Config.wxs's RegistrySearch supplies one. -->
     <Property Id="PORT" Value="6500" Secure="yes" />
-    <Property Id="CERT_THUMBPRINT" Value="" Secure="yes" />
-    <Property Id="TENANT_ID" Value="" Secure="yes" />
-    <Property Id="CLIENT_ID" Value="" Secure="yes" />
+    <Property Id="CERT_THUMBPRINT" Secure="yes" />
+    <Property Id="TENANT_ID" Secure="yes" />
+    <Property Id="CLIENT_ID" Secure="yes" />
     <Property Id="ALLOW_LAN" Value="0" Secure="yes" />
 
     <!-- Data-retention switch for uninstall (ADR-0022 / Folders.wxs util:RemoveFolderEx). -->
