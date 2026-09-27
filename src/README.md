@@ -1,6 +1,6 @@
 # src/
 
-> **Durum:** Faz 0 iskeleti — .NET 10 walking skeleton eklendi (5–23 Ekim 2026).
+> **Durum:** Faz 0 iskeleti — .NET 10 walking skeleton eklendi (27 Eylül 2026; Faz 0 planı 5–23 Ekim 2026).
 
 Bu dizin OpsIntel'in .NET 10 modüler monolitini ve React SPA'sını barındırır. Skeleton validasyondadır; servis modu, gerçek Entra tenant'ı ve Outlook veri erişimi Faz 1'de tamamlanacaktır. Mimari: [docs/architecture/overview.md](../docs/architecture/overview.md), [ADR-0001](../docs/adr/0001-modular-monolith-two-services.md). Kaynak: [araştırma raporu §5](../docs/research/rapor-m365-operasyon-zekasi-platform-plani.md).
 
