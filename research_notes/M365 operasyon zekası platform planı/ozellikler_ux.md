@@ -136,7 +136,7 @@ Academic work since about 2016 converts email into event logs by classifying mes
 - A proposed simpler core model for object-centric event data (OCED) discusses the design space. — [arXiv 2410.14495](https://arxiv.org/pdf/2410.14495)
 
 ### Inferences
-- **Case notion:** use the *object-centric* view. Object types are Project, Thread (conversationId), Document, Organization, Person, Commitment, Decision, PO/Invoice. Activity labels are a controlled vocabulary, for example: `OfferSent, OfferRevised, PORecieved, ContractSigned, KickoffHeld, DesignDocShared, QuestionAsked, QuestionAnswered, CommitmentMade, CommitmentFulfilled, DecisionMade, RiskRaised, EscalationRaised, UATStarted, DefectReported, Delivered, InvoiceSent, PaymentReceived, ProjectClosed`. Each event links to its evidence. **[V:H][F:M]**
+- **Case notion:** use the *object-centric* view. Object types are Project, Thread (conversationId), Document, Organization, Person, Commitment, Decision, PO/Invoice. Activity labels are a controlled vocabulary, for example: `OfferSent, OfferRevised, POReceived, ContractSigned, KickoffHeld, DesignDocShared, QuestionAsked, QuestionAnswered, CommitmentMade, CommitmentFulfilled, DecisionMade, RiskRaised, EscalationRaised, UATStarted, DefectReported, Delivered, InvoiceSent, PaymentReceived, ProjectClosed`. Each event links to its evidence. **[V:H][F:M]**
 - **Visualizations:**
   - (1) *Project timeline* with **swimlanes per organization or stakeholder**, milestone diamonds, phase bands and decision/risk markers; clicking any marker opens the evidence quote. **[V:H][F:H]**
   - (2) *Directly-follows process map* across projects of the same type, to show the typical path (offer→PO→kickoff…) and deviations. **[V:M][F:M]**
