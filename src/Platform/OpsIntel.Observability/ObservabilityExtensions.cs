@@ -24,11 +24,12 @@ public static class ObservabilityExtensions
                 .Enrich.FromLogContext()
                 .Enrich.WithEnvironmentName()
                 .Enrich.With<RedactionEnricher>()
-                .WriteTo.Console()
+                .WriteTo.Console(formatProvider: System.Globalization.CultureInfo.InvariantCulture)
                 .WriteTo.File(
-                    Path.Combine(AppContext.BaseDirectory, "logs", $"{serviceName}-.log"),
+                    Path.Combine(AppContext.BaseDirectory, "logs", string.Format(System.Globalization.CultureInfo.InvariantCulture, "{0}-.log", serviceName)),
                     rollingInterval: RollingInterval.Day,
-                    restrictedToMinimumLevel: LogEventLevel.Information);
+                    restrictedToMinimumLevel: LogEventLevel.Information,
+                    formatProvider: System.Globalization.CultureInfo.InvariantCulture);
         });
 
         builder.ConfigureServices(services =>

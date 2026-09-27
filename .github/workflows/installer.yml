@@ -1,0 +1,143 @@
+name: installer
+
+# Builds the OpsIntel MSI (and, on request, the optional Burn bundle) on
+# windows-latest. ADR-0005/ADR-0006. Sources: docs/research/notes/
+# msi_kurulum_dagitim.md §9, docs/adr/0005-single-msi-wix-v7.md,
+# docs/adr/0006-code-signing.md.
+#
+# IMPORTANT ASSUMPTIONS (verify in Faz 0):
+# - windows-latest = windows-2025 as of 2026-09-27 and ships only WiX 3.14.1
+#   preinstalled. We do NOT rely on it: installer/Directory.Build.props pins
+#   WixToolset.Sdk/7.0.0 and it is restored from NuGet by `dotnet build` like
+#   any other SDK-style project — no `wix` CLI / global tool install needed,
+#   and no assumption that any WiX version is preinstalled on the runner.
+# - src/OpsIntel.Host and src/OpsIntel.Intelligence are owned by a parallel
+#   workstream. This workflow fails clearly (via tools/build.ps1's own guard)
+#   if they are not present yet, rather than silently producing an empty MSI.
+# - Signing is entirely conditional on secrets being configured (see the
+#   `if:` on the Sign step). Until an ADR-0006 signing vendor is contracted,
+#   this workflow still builds and uploads an UNSIGNED MSI artifact so the
+#   installer skeleton itself can be reviewed/tested.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "installer/**"
+      - "src/OpsIntel.Host/**"
+      - "src/OpsIntel.Intelligence/**"
+      - "src/OpsIntel.SetupHelper/**"
+      - "tools/build.ps1"
+      - "tools/sign.ps1"
+      - ".github/workflows/installer.yml"
+  pull_request:
+    paths:
+      - "installer/**"
+      - "src/OpsIntel.Host/**"
+      - "src/OpsIntel.Intelligence/**"
+      - "src/OpsIntel.SetupHelper/**"
+      - "tools/build.ps1"
+      - "tools/sign.ps1"
+      - ".github/workflows/installer.yml"
+  workflow_dispatch:
+    inputs:
+      build_bundle:
+        description: "Also build the optional Burn bundle (installer/Bundle)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  build-msi:
+    name: Build MSI
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          # Matches global.json; keep in sync with it (ADR-0002, .NET 10 LTS).
+          dotnet-version: "10.0.x"
+
+      - name: Compute build version
+        id: version
+        shell: pwsh
+        run: |
+          # ADR-0022: MSI ignores the 4th version field — only the first three
+          # matter for MajorUpgrade comparisons. yyyy.mm.<run number> keeps
+          # every CI build monotonically increasing without needing a tag.
+          $date = Get-Date
+          $version = "$($date.Year).$($date.Month).${{ github.run_number }}"
+          Write-Host "Resolved version: $version"
+          "version=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+
+      - name: Build MSI (and optional bundle)
+        shell: pwsh
+        run: |
+          $bundleSwitch = @()
+          if ('${{ github.event.inputs.build_bundle }}' -eq 'true') {
+            $bundleSwitch = @('-Bundle')
+          }
+          ./tools/build.ps1 -Version '${{ steps.version.outputs.version }}' @bundleSwitch
+
+      - name: Sign build outputs
+        shell: pwsh
+        # Conditional on secrets being present, per ADR-0006: a Türkiye legal
+        # entity cannot use Azure Artifact Signing's Public Trust profile, so
+        # no first-party GitHub Action is assumed here. Until an OV
+        # cert/cloud-HSM vendor is contracted (ADR-0006 "Doğrulama / açık
+        # noktalar"), this step is skipped rather than failing the build.
+        if: ${{ secrets.OPSINTEL_SIGNING_CERT_THUMBPRINT != '' }}
+        env:
+          OPSINTEL_SIGNING_CERT_THUMBPRINT: ${{ secrets.OPSINTEL_SIGNING_CERT_THUMBPRINT }}
+        run: |
+          ./tools/sign.ps1 -CertificateThumbprint $env:OPSINTEL_SIGNING_CERT_THUMBPRINT
+
+      - name: Skip-signing notice
+        shell: pwsh
+        if: ${{ secrets.OPSINTEL_SIGNING_CERT_THUMBPRINT == '' }}
+        run: |
+          Write-Warning "OPSINTEL_SIGNING_CERT_THUMBPRINT secret is not set — uploading an UNSIGNED MSI. See ADR-0006 (signing vendor selection pending)."
+
+      - name: Upload MSI artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: OpsIntel-x64-msi
+          path: installer/bin/x64/Release/OpsIntel-x64.msi
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Upload bundle artifact
+        if: ${{ github.event.inputs.build_bundle == 'true' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: OpsIntelSetup-exe
+          path: installer/Bundle/bin/x64/Release/OpsIntelSetup.exe
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Upload install logs (always, for debugging)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: installer-build-logs
+          path: |
+            installer/**/*.log
+            **/msbuild.binlog
+          if-no-files-found: ignore
+          retention-days: 14
+
+  # Pester install-matrix execution (tests/installer/Install.Tests.ps1) is
+  # intentionally NOT wired into this job yet: it needs a genuinely clean
+  # machine (services/registry/certs/firewall must start from nothing), which
+  # an ephemeral windows-latest runner arguably provides, but this has not
+  # been spike-verified (msi_kurulum_dagitim.md §9 Gaps: "Nested
+  # virtualization / Windows Sandbox support on GitHub-hosted Windows runners
+  # was not verified"). TODO(Faz 0 spike A): add a `pester-install-matrix` job
+  # here once that is confirmed, or move it to a self-hosted Hyper-V runner
+  # for the N-1 upgrade scenario, which needs a snapshot of the previous
+  # release and cannot run on a stateless hosted runner at all.

@@ -18,8 +18,4 @@
     <PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Content Include="wwwroot\**" CopyToOutputDirectory="PreserveNewest" />
-  </ItemGroup>
-
 </Project>

@@ -13,10 +13,18 @@ This module builds a normalized string *and* a per-character offset map back int
 original text, so callers (verify_quotes.py) can turn a match in normalized space back into
 a ``(char_start, char_end)`` span in the original cleaned message text, as required by the
 ``Evidence``/``TextPositionSelector`` data model (research report §3).
+
+Normalization pipeline, each stage offset-tracked back to the original string:
+1. Unicode NFC normalization of the WHOLE string (composes e.g. "g" + combining breve into
+   the precomposed "ğ"; must run on the full string, not char-by-char, since composition
+   looks at adjacent codepoints).
+2. Turkish-aware casefold (İ/ı/I/i handled explicitly) plus quote/dash/NBSP folding.
+3. Whitespace-run collapse to a single ASCII space, with leading/trailing trim.
 """
 
 from __future__ import annotations
 
+import difflib
 import unicodedata
 from dataclasses import dataclass
 
@@ -28,9 +36,9 @@ _TURKISH_UPPER_TO_LOWER = {
     "I": "ı",
 }
 
-# Normalize "smart" quote/apostrophe variants to plain ASCII equivalents so a quote typed
-# with a straight apostrophe matches a source that has a curly one (or vice versa), and
-# dash variants that commonly appear in pasted/HTML-derived email bodies.
+# Normalize "smart" quote/apostrophe variants so a quote typed with a straight apostrophe
+# matches a source that has a curly one (or vice versa), plus dash/NBSP variants common in
+# pasted/HTML-derived email bodies.
 _PUNCT_FOLD = {
     "’": "'",  # RIGHT SINGLE QUOTATION MARK
     "‘": "'",  # LEFT SINGLE QUOTATION MARK
@@ -42,10 +50,31 @@ _PUNCT_FOLD = {
 }
 
 
-def _fold_char(ch: str) -> str:
-    """Fold a single character the Turkish-aware way. May expand to >1 char (rare, e.g.
-    German sharp s under casefold); collapse to <1 char never happens here."""
-    ch = unicodedata.normalize("NFC", ch)
+def _nfc_align(text: str) -> tuple[str, list[int]]:
+    """NFC-normalize the whole string and return (nfc_text, index_map) where
+    index_map[i] is the original-string index the nfc_text[i] character is derived from.
+    Uses a diff-based best-effort alignment for the (rare, and typically short) spans where
+    composition changes the character count."""
+    nfc = unicodedata.normalize("NFC", text)
+    if nfc == text:
+        return nfc, list(range(len(nfc)))
+
+    matcher = difflib.SequenceMatcher(None, text, nfc, autojunk=False)
+    index_map = [0] * len(nfc)
+    for tag, i1, i2, j1, j2 in matcher.get_opcodes():
+        if tag == "equal":
+            for k in range(j1, j2):
+                index_map[k] = i1 + (k - j1)
+        else:
+            origin = i1 if i1 < len(text) else max(0, len(text) - 1)
+            for k in range(j1, j2):
+                index_map[k] = origin
+    return nfc, index_map
+
+
+def _fold_char_nfc(ch: str) -> str:
+    """Fold a single (already NFC-normalized) character the Turkish-aware way. May expand
+    to >1 char (rare, e.g. German sharp s under casefold); never collapses to 0 chars."""
     if ch in _TURKISH_UPPER_TO_LOWER:
         return _TURKISH_UPPER_TO_LOWER[ch]
     if ch in _PUNCT_FOLD:
@@ -77,12 +106,15 @@ def normalize_with_map(text: str | None) -> NormalizedText:
     if not text:
         return NormalizedText(text="", index_map=())
 
+    nfc_text, nfc_origin = _nfc_align(text)
+
     folded_chars: list[str] = []
     folded_origin: list[int] = []
-    for i, ch in enumerate(text):
-        for fc in _fold_char(ch):
+    for i, ch in enumerate(nfc_text):
+        origin = nfc_origin[i]
+        for fc in _fold_char_nfc(ch):
             folded_chars.append(fc)
-            folded_origin.append(i)
+            folded_origin.append(origin)
 
     # Collapse consecutive whitespace to a single ASCII space, and trim leading/trailing
     # whitespace, while keeping the origin map in lock-step.
