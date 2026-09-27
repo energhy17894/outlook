@@ -14,8 +14,12 @@
 <Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
   <Fragment>
 
-    <!-- Re-read prior values on upgrade/repair before they would be overwritten. -->
-    <Property Id="PORT" Secure="yes">
+    <!-- Single declaration of the public properties (Package.wxs no longer repeats them).
+         Value = default for a fresh install; RegistrySearch re-reads the previous install's
+         value on upgrade/repair. Note: AppSearch runs after command-line properties are set,
+         so on an upgrade a value found in the registry wins over one passed to msiexec.
+         TODO(Faz 1): preserve explicit command-line values across upgrades if needed. -->
+    <Property Id="PORT" Value="6500" Secure="yes">
       <RegistrySearch Id="PortSearch" Root="HKLM" Key="SOFTWARE\OpsIntel" Name="Port" Type="raw" />
     </Property>
     <Property Id="CERT_THUMBPRINT" Secure="yes">
@@ -27,7 +31,7 @@
     <Property Id="CLIENT_ID" Secure="yes">
       <RegistrySearch Id="ClientIdSearch" Root="HKLM" Key="SOFTWARE\OpsIntel" Name="ClientId" Type="raw" />
     </Property>
-    <Property Id="ALLOW_LAN" Secure="yes">
+    <Property Id="ALLOW_LAN" Value="0" Secure="yes">
       <RegistrySearch Id="AllowLanSearch" Root="HKLM" Key="SOFTWARE\OpsIntel" Name="AllowLan" Type="raw" />
     </Property>
 
@@ -38,7 +42,9 @@
           <RegistryValue Name="CertThumbprint" Type="string" Value="[CERT_THUMBPRINT]" />
           <RegistryValue Name="TenantId" Type="string" Value="[TENANT_ID]" />
           <RegistryValue Name="ClientId" Type="string" Value="[CLIENT_ID]" />
-          <RegistryValue Name="AllowLan" Type="integer" Value="[ALLOW_LAN]" />
+          <!-- String, not integer: a raw RegistrySearch of a DWORD returns "#1", which would
+               stop matching ALLOW_LAN="1" in Firewall.wxs after an upgrade. -->
+          <RegistryValue Name="AllowLan" Type="string" Value="[ALLOW_LAN]" />
           <RegistryValue Name="InstallDir" Type="string" Value="[INSTALLFOLDER]" />
           <RegistryValue Name="ProductVersion" Type="string" Value="$(var.ProductVersion)" />
         </RegistryKey>
