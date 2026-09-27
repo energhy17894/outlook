@@ -1,6 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using OpsIntel.AI.Extraction;
 using OpsIntel.Intelligence;
 using OpsIntel.Observability;
 using OpsIntel.Platform.Abstractions;
@@ -8,7 +9,7 @@ using OpsIntel.Platform.Abstractions;
 var hostBuilder = Host.CreateDefaultBuilder(args)
     .UseWindowsService()
     .AddOpsIntelObservability("OpsIntel.Intelligence")
-    .ConfigureServices(services =>
+    .ConfigureServices((context, services) =>
     {
         // ADR-0022 / crash-restart contract: an unhandled BackgroundService exception stops
         // the whole host; the catch below exits non-zero so the Windows Service Control
@@ -23,6 +24,11 @@ var hostBuilder = Host.CreateDefaultBuilder(args)
         // authenticates to Graph and cannot send mail; it only processes content the Host has
         // already fetched and handed off via this job queue.
         services.AddSingleton<IJobQueue, NoOpJobQueue>();
+
+        // Quarantined AI extraction pipeline (ADR-0013/ADR-0015/ADR-0019): no tools, no
+        // Graph tokens — see OpsIntel.AI.Extraction.ServiceCollectionExtensions.
+        services.AddOpsIntelAiExtraction(context.Configuration);
+
         services.AddHostedService<ExtractionWorker>();
     });
 

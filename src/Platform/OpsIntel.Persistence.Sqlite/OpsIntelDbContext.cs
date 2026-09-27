@@ -24,6 +24,7 @@ public sealed class OpsIntelDbContext : DbContext
     public DbSet<WorkItemRow> WorkItems => Set<WorkItemRow>();
     public DbSet<EvidenceRow> Evidence => Set<EvidenceRow>();
     public DbSet<AuditEventRow> AuditEvents => Set<AuditEventRow>();
+    public DbSet<JobRow> Jobs => Set<JobRow>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -54,6 +55,29 @@ public sealed class OpsIntelDbContext : DbContext
             e.Property(a => a.SequenceNumber).ValueGeneratedOnAdd();
             e.HasIndex(a => a.EventId).IsUnique();
         });
+
+        // Durable job/outbox queue (ADR-0012). idempotency_key is UNIQUE so re-enqueueing the
+        // same logical work is a no-op (SqliteJobQueue.EnqueueAsync relies on this constraint
+        // via `INSERT ... ON CONFLICT(idempotency_key) DO NOTHING`).
+        modelBuilder.Entity<JobRow>(e =>
+        {
+            e.ToTable("jobs");
+            e.HasKey(j => j.Id);
+            e.Property(j => j.Id).HasColumnName("id").ValueGeneratedOnAdd();
+            e.Property(j => j.Type).HasColumnName("type").IsRequired();
+            e.Property(j => j.Payload).HasColumnName("payload").IsRequired();
+            e.Property(j => j.IdempotencyKey).HasColumnName("idempotency_key").IsRequired();
+            e.Property(j => j.State).HasColumnName("state").IsRequired();
+            e.Property(j => j.Attempts).HasColumnName("attempts");
+            e.Property(j => j.NotBeforeUtc).HasColumnName("not_before_utc");
+            e.Property(j => j.LeasedUntilUtc).HasColumnName("leased_until");
+            e.Property(j => j.WorkerId).HasColumnName("worker_id");
+            e.Property(j => j.LastError).HasColumnName("last_error");
+            e.Property(j => j.CreatedAtUtc).HasColumnName("created_at_utc");
+            e.Property(j => j.UpdatedAtUtc).HasColumnName("updated_at_utc");
+            e.HasIndex(j => j.IdempotencyKey).IsUnique();
+            e.HasIndex(j => new { j.State, j.NotBeforeUtc });
+        });
     }
 
     /// <summary>
@@ -69,7 +93,7 @@ public sealed class OpsIntelDbContext : DbContext
         }
 
         using var command = connection.CreateCommand();
-        command.CommandText = "PRAGMA journal_mode = 'wal';";
+        command.CommandText = "PRAGMA journal_mode = 'wal'; PRAGMA busy_timeout = 5000;";
         command.ExecuteNonQuery();
     }
 }

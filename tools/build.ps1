@@ -5,8 +5,9 @@
 
 .DESCRIPTION
     Mirrors the pipeline in msi_kurulum_dagitim.md §9 "Inferences: Pipeline":
-      1. dotnet publish -c Release -r win-x64 --self-contained for OpsIntel.Host
-         and OpsIntel.Intelligence (ADR-0002).
+      1. dotnet publish -c Release -r win-x64 --self-contained for OpsIntel.Host,
+         OpsIntel.Intelligence, and OpsIntel.SetupHelper (ADR-0002; the latter's
+         publish dir is what installer/Cert.wxs's SetupHelperExeFile references).
       2. dotnet build the WiX v7 SDK-style installer project
          (installer/OpsIntel.Installer.wixproj), with AcceptEula=wix7
          (installer/Directory.Build.props already sets this; -p:AcceptEula=wix7
@@ -54,13 +55,15 @@ $RepoRoot = Resolve-Path (Join-Path $PSScriptRoot '..')
 $ArtifactsDir = Join-Path $RepoRoot 'artifacts\publish'
 $HostPublishDir = Join-Path $ArtifactsDir 'OpsIntel.Host'
 $IntelligencePublishDir = Join-Path $ArtifactsDir 'OpsIntel.Intelligence'
+$SetupHelperPublishDir = Join-Path $ArtifactsDir 'OpsIntel.SetupHelper'
 
-# Paths to the two service projects. NOTE: these projects are being built by a
-# parallel workstream and may not exist yet in every checkout — this script
+# Paths to the service/tool projects. NOTE: these projects are being built by
+# parallel workstreams and may not exist yet in every checkout — this script
 # fails loudly (not silently) if they are missing, since a silently-empty
 # publish dir would let the WiX build produce a broken, service-less MSI.
 $HostProject = Join-Path $RepoRoot 'src\OpsIntel.Host\OpsIntel.Host.csproj'
 $IntelligenceProject = Join-Path $RepoRoot 'src\OpsIntel.Intelligence\OpsIntel.Intelligence.csproj'
+$SetupHelperProject = Join-Path $RepoRoot 'src\OpsIntel.SetupHelper\OpsIntel.SetupHelper.csproj'
 
 function Invoke-Step {
     param([string]$Description, [scriptblock]$Action)
@@ -77,6 +80,9 @@ if (-not $SkipPublish) {
     }
     if (-not (Test-Path $IntelligenceProject)) {
         throw "OpsIntel.Intelligence project not found at '$IntelligenceProject'. Same note as above — build it first, or pass -SkipPublish."
+    }
+    if (-not (Test-Path $SetupHelperProject)) {
+        throw "OpsIntel.SetupHelper project not found at '$SetupHelperProject'. Same note as above — build it first, or pass -SkipPublish."
     }
 
     Invoke-Step "dotnet publish OpsIntel.Host (self-contained win-x64)" {
@@ -96,19 +102,22 @@ if (-not $SkipPublish) {
             -p:Version=$Version `
             -o $IntelligencePublishDir
     }
+
+    Invoke-Step "dotnet publish OpsIntel.SetupHelper (self-contained win-x64)" {
+        dotnet publish $SetupHelperProject `
+            -c $Configuration `
+            -r win-x64 `
+            --self-contained true `
+            -p:Version=$Version `
+            -o $SetupHelperPublishDir
+    }
 }
 else {
     Write-Host "==> Skipping publish; reusing $ArtifactsDir" -ForegroundColor Yellow
-    if (-not (Test-Path $HostPublishDir) -or -not (Test-Path $IntelligencePublishDir)) {
-        throw "SkipPublish was set but $ArtifactsDir does not contain both OpsIntel.Host and OpsIntel.Intelligence publish output."
+    if (-not (Test-Path $HostPublishDir) -or -not (Test-Path $IntelligencePublishDir) -or -not (Test-Path $SetupHelperPublishDir)) {
+        throw "SkipPublish was set but $ArtifactsDir does not contain OpsIntel.Host, OpsIntel.Intelligence and OpsIntel.SetupHelper publish output."
     }
 }
-
-# TODO(Faz 0): once src/OpsIntel.SetupHelper exists, publish it here too, into
-# artifacts\publish\OpsIntel.SetupHelper (see installer/Cert.wxs header comment
-# and installer/Directory.Build.props' OpsIntelSetupHelperPublishDir property).
-# Left out for now because the project does not exist in this repository yet;
-# the WiX build below will fail on Cert.wxs's File reference until it does.
 
 Invoke-Step "dotnet build OpsIntel.Installer.wixproj (WiX v7 MSI)" {
     dotnet build (Join-Path $RepoRoot 'installer\OpsIntel.Installer.wixproj') `
@@ -116,7 +125,8 @@ Invoke-Step "dotnet build OpsIntel.Installer.wixproj (WiX v7 MSI)" {
         -p:Version=$Version `
         -p:AcceptEula=wix7 `
         -p:OpsIntelHostPublishDir="$HostPublishDir\" `
-        -p:OpsIntelIntelligencePublishDir="$IntelligencePublishDir\"
+        -p:OpsIntelIntelligencePublishDir="$IntelligencePublishDir\" `
+        -p:OpsIntelSetupHelperPublishDir="$SetupHelperPublishDir\"
 }
 
 if ($Bundle) {

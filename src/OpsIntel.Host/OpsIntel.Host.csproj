@@ -12,6 +12,7 @@
     <ProjectReference Include="..\Platform\OpsIntel.Platform.Windows\OpsIntel.Platform.Windows.csproj" />
     <ProjectReference Include="..\Platform\OpsIntel.Persistence.Sqlite\OpsIntel.Persistence.Sqlite.csproj" />
     <ProjectReference Include="..\Platform\OpsIntel.Observability\OpsIntel.Observability.csproj" />
+    <ProjectReference Include="..\Modules\OpsIntel.Connectors.Graph\OpsIntel.Connectors.Graph.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -7,6 +7,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\OpsIntel.Contracts\OpsIntel.Contracts.csproj" />
+    <ProjectReference Include="..\OpsIntel.Platform.Abstractions\OpsIntel.Platform.Abstractions.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -1,0 +1,34 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>OpsIntel.AI.Extraction</RootNamespace>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <!-- Microsoft.AI.Foundry.Local.Runtime (a transitive dependency of Microsoft.AI.Foundry.Local
+         — see SPIKE-FOUNDRY-LOCAL.md) ships only RID-specific native assets, so NuGet needs a
+         RuntimeIdentifier at restore time even for an ordinary framework-dependent build.
+         Listing both here means a plain `dotnet build`/`dotnet test` (no -r flag) resolves on
+         both this Linux dev/CI environment and the Windows production target. -->
+    <RuntimeIdentifiers>linux-x64;win-x64</RuntimeIdentifiers>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\OpsIntel.Contracts\OpsIntel.Contracts.csproj" />
+    <ProjectReference Include="..\OpsIntel.Normalization\OpsIntel.Normalization.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.AI" />
+    <PackageReference Include="Microsoft.Extensions.AI.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.AI.OpenAI" />
+    <PackageReference Include="Microsoft.Extensions.Options" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" />
+    <!-- Spike (SPIKE-FOUNDRY-LOCAL.md): the GA C# SDK restores fine on Linux (its native
+         runtime package ships linux-x64/linux-arm64 CPU-only builds), so it is wired in
+         directly, behind the ExtractionOptions.ModelHosting feature flag, rather than
+         behind a compile-time #if. -->
+    <PackageReference Include="Microsoft.AI.Foundry.Local" />
+  </ItemGroup>
+
+</Project>

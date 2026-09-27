@@ -3,6 +3,12 @@
     <Project Path="src/OpsIntel.Contracts/OpsIntel.Contracts.csproj" />
     <Project Path="src/OpsIntel.Host/OpsIntel.Host.csproj" />
     <Project Path="src/OpsIntel.Intelligence/OpsIntel.Intelligence.csproj" />
+    <Project Path="src/OpsIntel.SetupHelper/OpsIntel.SetupHelper.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/">
+    <Project Path="src/Modules/OpsIntel.Connectors.Graph/OpsIntel.Connectors.Graph.csproj" />
+    <Project Path="src/Modules/OpsIntel.Normalization/OpsIntel.Normalization.csproj" />
+    <Project Path="src/Modules/OpsIntel.AI.Extraction/OpsIntel.AI.Extraction.csproj" />
   </Folder>
   <Folder Name="/src/Platform/">
     <Project Path="src/Platform/OpsIntel.Observability/OpsIntel.Observability.csproj" />
@@ -15,6 +21,9 @@
     <Project Path="tests/architecture/OpsIntel.ArchitectureTests/OpsIntel.ArchitectureTests.csproj" />
   </Folder>
   <Folder Name="/tests/unit/">
+    <Project Path="tests/unit/OpsIntel.Connectors.Graph.Tests/OpsIntel.Connectors.Graph.Tests.csproj" />
     <Project Path="tests/unit/OpsIntel.UnitTests/OpsIntel.UnitTests.csproj" />
+    <Project Path="tests/unit/OpsIntel.SetupHelper.Tests/OpsIntel.SetupHelper.Tests.csproj" />
+    <Project Path="tests/unit/OpsIntel.AI.Tests/OpsIntel.AI.Tests.csproj" />
   </Folder>
 </Solution>

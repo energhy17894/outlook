@@ -9,6 +9,7 @@
     <ProjectReference Include="..\OpsIntel.Contracts\OpsIntel.Contracts.csproj" />
     <ProjectReference Include="..\Platform\OpsIntel.Platform.Abstractions\OpsIntel.Platform.Abstractions.csproj" />
     <ProjectReference Include="..\Platform\OpsIntel.Observability\OpsIntel.Observability.csproj" />
+    <ProjectReference Include="..\Modules\OpsIntel.AI.Extraction\OpsIntel.AI.Extraction.csproj" />
   </ItemGroup>
 
   <ItemGroup>

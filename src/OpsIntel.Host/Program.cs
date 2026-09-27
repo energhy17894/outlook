@@ -2,9 +2,12 @@ using System.Net;
 using System.Security.Cryptography.X509Certificates;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
+using OpsIntel.Connectors.Graph;
 using OpsIntel.Host.Api;
+using OpsIntel.Host.Auth;
 using OpsIntel.Host.Security;
 using OpsIntel.Observability;
+using OpsIntel.Platform.Abstractions;
 using OpsIntel.Platform.Windows;
 using Serilog;
 
@@ -53,6 +56,13 @@ builder.WebHost.ConfigureKestrel((context, options) =>
 
 builder.Services.AddHealthChecks();
 
+// ADR-0007/0008/0009: Microsoft Graph connector (delegated auth BFF + PKCE, delta polling,
+// reply-draft-only writes). The DPAPI secret store also backs the MSAL token cache.
+builder.Services.Configure<DpapiSecretStoreOptions>(
+    builder.Configuration.GetSection("OpsIntel:Secrets"));
+builder.Services.AddSingleton<ISecretStore, DpapiSecretStore>();
+builder.Services.AddOpsIntelGraphConnector(builder.Configuration);
+
 var app = builder.Build();
 
 app.UseOpsIntelSecurityHeaders();
@@ -68,6 +78,8 @@ app.MapHealthChecks("/health/ready");
 app.MapGet("/api/v1/status", () => Results.Ok(new { status = "ok", service = "OpsIntel.Host" }));
 
 app.MapGet("/api/v1/events", EventsEndpoint.HandleAsync);
+
+app.MapOpsIntelAuthEndpoints();
 
 app.MapFallbackToFile("index.html");
 
