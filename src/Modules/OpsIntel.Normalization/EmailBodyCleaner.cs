@@ -187,7 +187,12 @@ public static class EmailBodyCleaner
         var lines = text.Split('\n');
         for (var i = 0; i < lines.Length; i++)
         {
-            var line = lines[i].Trim().TrimEnd(',', '.', ':').ToLowerInvariant();
+            // Turkish-aware fold for the valediction match only: plain ToLowerInvariant()
+            // leaves 'İ' (U+0130) uppercase (it is not part of the invariant lowering table),
+            // which would silently fail to match "iyi çalışmalar" etc.
+            var line = lines[i].Trim().TrimEnd(',', '.', ':')
+                .Replace('İ', 'i').Replace('I', 'ı')
+                .ToLowerInvariant();
             if (line.Length == 0 || line.Length > 40)
             {
                 continue;
