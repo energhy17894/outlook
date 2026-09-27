@@ -68,11 +68,12 @@ jobs:
         id: version
         shell: pwsh
         run: |
-          # ADR-0022: MSI ignores the 4th version field — only the first three
-          # matter for MajorUpgrade comparisons. yyyy.mm.<run number> keeps
-          # every CI build monotonically increasing without needing a tag.
-          $date = Get-Date
-          $version = "$($date.Year).$($date.Month).${{ github.run_number }}"
+          # ADR-0022: MSI ignores the 4th version field; only the first three
+          # matter for MajorUpgrade comparisons. MSI also requires major < 256,
+          # minor < 256 and build < 65536 (ICE24), so a year-based major such as
+          # 2026 is invalid. Faz 0 builds use 0.1.<run number>, which stays
+          # monotonically increasing without needing a tag.
+          $version = "0.1.${{ github.run_number }}"
           Write-Host "Resolved version: $version"
           "version=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
 

@@ -34,7 +34,7 @@
     artifacts\publish\ (useful for iterating on the installer only).
 
 .EXAMPLE
-    pwsh -File tools/build.ps1 -Version 2026.9.1
+    pwsh -File tools/build.ps1 -Version 0.1.1
 
 .EXAMPLE
     pwsh -File tools/build.ps1 -Bundle

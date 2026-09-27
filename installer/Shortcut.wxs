@@ -24,8 +24,15 @@
       <Component Id="StartMenuShortcut" Directory="ProgramMenuOpsIntel" Guid="9D4A62B5-B93E-4E5D-9C3A-D677AB59A9F7">
         <File Id="StartMenuUrlFile"
               Name="OpsIntel.url"
-              Source="assets\OpsIntel.url"
-              KeyPath="yes" />
+              Source="assets\OpsIntel.url" />
+        <!-- ICE38: a component installed under a Start Menu folder must use an HKCU
+             registry value as its KeyPath, not a file (even in a per-machine package). -->
+        <RegistryValue Root="HKCU"
+                       Key="Software\OpsIntel"
+                       Name="StartMenuShortcut"
+                       Type="integer"
+                       Value="1"
+                       KeyPath="yes" />
         <RemoveFolder Id="RemoveProgramMenuOpsIntel" Directory="ProgramMenuOpsIntel" On="uninstall" />
       </Component>
     </ComponentGroup>
