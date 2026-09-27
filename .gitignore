@@ -1,0 +1,123 @@
+# =====================================================================
+# OpsIntel .gitignore
+# ÖNEMLİ: Gerçek e-posta, belge veya kişisel veri depoya ASLA konmaz.
+# Aşağıdaki "Kişisel veri koruması" bölümü bunun son savunma hattıdır.
+# =====================================================================
+
+# ---- Kişisel veri koruması (KVKK) ----
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+*.sqlite-shm
+*.sqlite-wal
+*.eml
+*.msg
+*.pst
+*.ost
+*.mbox
+*.vtt
+eval-data/
+**/eval-data/
+golden-set/
+**/golden-set/
+blobs/
+diag-bundle*/
+*.diag.zip
+.env
+.env.*
+*.env
+
+# ---- Sırlar ve sertifikalar ----
+*.pfx
+*.p12
+*.pem
+*.key
+*.snk
+secrets.json
+appsettings.*.local.json
+appsettings.Local.json
+
+# ---- Model ikili dosyaları (yalnızca manifest depoda tutulur) ----
+*.onnx
+*.gguf
+*.safetensors
+models/cache/
+models/**/*.bin
+
+# ---- .NET ----
+bin/
+obj/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Aa]rm64/
+publish/
+artifacts/
+*.user
+*.suo
+*.userprefs
+*.rsuser
+*.nupkg
+*.snupkg
+project.lock.json
+TestResults/
+*.trx
+coverage*.json
+coverage*.xml
+*.coverage
+BenchmarkDotNet.Artifacts/
+
+# ---- Node / Vite ----
+node_modules/
+dist/
+dist-ssr/
+.vite/
+*.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.eslintcache
+.npm/
+playwright-report/
+test-results/
+
+# ---- WiX / kurulum çıktıları ----
+*.msi
+*.msm
+*.msp
+*.wixpdb
+*.wixobj
+*.wixlib
+*.cab
+*.intunewin
+installer/**/bin/
+installer/**/obj/
+setup*.log
+install*.log
+
+# ---- IDE / editör ----
+.vs/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+*.swp
+*.swo
+*~
+*.sln.docstates
+.fleet/
+
+# ---- İşletim sistemi ----
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+.DS_Store
+
+# ---- Loglar ----
+logs/
+*.log
