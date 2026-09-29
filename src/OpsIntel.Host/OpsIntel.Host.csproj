@@ -13,6 +13,7 @@
     <ProjectReference Include="..\Platform\OpsIntel.Persistence.Sqlite\OpsIntel.Persistence.Sqlite.csproj" />
     <ProjectReference Include="..\Platform\OpsIntel.Observability\OpsIntel.Observability.csproj" />
     <ProjectReference Include="..\Modules\OpsIntel.Connectors.Graph\OpsIntel.Connectors.Graph.csproj" />
+    <ProjectReference Include="..\Modules\OpsIntel.Normalization\OpsIntel.Normalization.csproj" />
   </ItemGroup>
 
   <ItemGroup>

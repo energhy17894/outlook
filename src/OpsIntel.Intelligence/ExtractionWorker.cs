@@ -19,7 +19,7 @@ namespace OpsIntel.Intelligence;
 public sealed class ExtractionWorker : BackgroundService
 {
     /// <summary>Job type dispatched to <see cref="IExtractor.ExtractWorkItemsAsync"/>; payload is a JSON-serialized <see cref="ExtractionThread"/>.</summary>
-    public const string WorkItemExtractionJobType = "work_items_extraction";
+    public const string WorkItemExtractionJobType = ExtractionJobTypes.WorkItems;
 
     private static readonly TimeSpan PollInterval = TimeSpan.FromSeconds(5);
     private static readonly TimeSpan LeaseDuration = TimeSpan.FromMinutes(5);

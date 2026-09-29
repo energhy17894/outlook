@@ -1,6 +1,17 @@
 namespace OpsIntel.Contracts;
 
 /// <summary>
+/// Job types on the shared job queue (ADR-0012) that carry an <see cref="ExtractionThread"/>
+/// payload. Lives here so the Host (producer) and Intelligence (consumer) agree on the string
+/// without either referencing the other.
+/// </summary>
+public static class ExtractionJobTypes
+{
+    /// <summary>Work-item extraction; payload is a JSON-serialized <see cref="ExtractionThread"/>.</summary>
+    public const string WorkItems = "work_items_extraction";
+}
+
+/// <summary>
 /// One cleaned message in a thread, as handed to an extractor. <see cref="CleanedBody"/> is
 /// the text produced by <c>EmailBodyCleaner</c> — the same text
 /// evidence quotes are verified against.

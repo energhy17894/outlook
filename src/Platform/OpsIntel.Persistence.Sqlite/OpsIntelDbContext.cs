@@ -25,6 +25,7 @@ public sealed class OpsIntelDbContext : DbContext
     public DbSet<EvidenceRow> Evidence => Set<EvidenceRow>();
     public DbSet<AuditEventRow> AuditEvents => Set<AuditEventRow>();
     public DbSet<JobRow> Jobs => Set<JobRow>();
+    public DbSet<SyncStateRow> SyncStates => Set<SyncStateRow>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -78,7 +79,36 @@ public sealed class OpsIntelDbContext : DbContext
             e.HasIndex(j => j.IdempotencyKey).IsUnique();
             e.HasIndex(j => new { j.State, j.NotBeforeUtc });
         });
+
+        // Keep in sync with SyncStateTableSql below.
+        modelBuilder.Entity<SyncStateRow>(e =>
+        {
+            e.ToTable("sync_state");
+            e.HasKey(s => new { s.SourceKind, s.ContainerId });
+            e.Property(s => s.SourceKind).HasColumnName("source_kind");
+            e.Property(s => s.ContainerId).HasColumnName("container_id");
+            e.Property(s => s.DeltaLink).HasColumnName("delta_link");
+            e.Property(s => s.LastSuccessUtc).HasColumnName("last_success_utc");
+            e.Property(s => s.ErrorCount).HasColumnName("error_count");
+        });
     }
+
+    /// <summary>
+    /// <c>EnsureCreated</c> is a no-op once any table exists, so a DataDir\app.db first created
+    /// (e.g. by Intelligence) before <c>sync_state</c> was added to the model would never get it.
+    /// ponytail: hand-written catch-up for this one table; the Faz 0 migrations TODO above
+    /// replaces it (and must not be followed by more of these).
+    /// </summary>
+    internal const string SyncStateTableSql = """
+        CREATE TABLE IF NOT EXISTS "sync_state" (
+            "source_kind" TEXT NOT NULL,
+            "container_id" TEXT NOT NULL,
+            "delta_link" TEXT NULL,
+            "last_success_utc" TEXT NULL,
+            "error_count" INTEGER NOT NULL,
+            CONSTRAINT "PK_sync_state" PRIMARY KEY ("source_kind", "container_id")
+        );
+        """;
 
     /// <summary>
     /// Opens the underlying connection (if not already open) and switches it to WAL journal
@@ -113,6 +143,7 @@ public static class OpsIntelDbContextFactory
         var context = new OpsIntelDbContext(options);
         context.EnsureWalModeEnabled();
         context.Database.EnsureCreated();
+        context.Database.ExecuteSqlRaw(OpsIntelDbContext.SyncStateTableSql);
         return context;
     }
 }

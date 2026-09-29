@@ -45,6 +45,28 @@ public sealed class EvidenceRow
 }
 
 /// <summary>
+/// Delta-sync cursor for one source container (data-model.md <c>SyncState</c>, ADR-0009), e.g.
+/// one mail folder. <see cref="DeltaLink"/> is null until the first round completes, and is
+/// cleared on <c>410 Gone</c>/<c>syncStateNotFound</c> to force a full resync.
+/// </summary>
+public sealed class SyncStateRow
+{
+    /// <summary>Source kind, e.g. <c>mail_folder</c>.</summary>
+    public string SourceKind { get; set; } = default!;
+
+    /// <summary>Container ID within the source (mail folder ID or well-known name).</summary>
+    public string ContainerId { get; set; } = default!;
+
+    /// <summary>Opaque Graph <c>@odata.deltaLink</c>, replayed verbatim on the next round.</summary>
+    public string? DeltaLink { get; set; }
+
+    public DateTimeOffset? LastSuccessUtc { get; set; }
+
+    /// <summary>Consecutive failed rounds; reset to 0 on success.</summary>
+    public int ErrorCount { get; set; }
+}
+
+/// <summary>
 /// An append-only, hash-chained audit row (ADR-0018). <see cref="Hash"/> =
 /// SHA-256(<see cref="PrevHash"/> ‖ canonical JSON of the event's own fields); see
 /// <see cref="AuditLog"/> for how the chain is built and verified.

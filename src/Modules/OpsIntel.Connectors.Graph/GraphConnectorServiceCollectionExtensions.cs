@@ -32,6 +32,7 @@ public static class GraphConnectorServiceCollectionExtensions
             return new MailboxConcurrencyLimiter(options.MaxConcurrentRequestsPerMailbox);
         });
 
+        services.AddTransient<GraphBearerTokenHandler>();
         services.AddTransient<ImmutableIdHandler>();
         services.AddTransient<MailboxConcurrencyHandler>();
         services.AddTransient(sp =>
@@ -48,6 +49,8 @@ public static class GraphConnectorServiceCollectionExtensions
             .AddHttpClient(HttpClientName)
             // Outermost first: the concurrency gate must be held across a request's retries, so
             // RetryAfterHandler sits innermost, closest to the network (see its own doc comment).
+            // The token is fetched outside the gate so a slow MSAL refresh never holds a slot.
+            .AddHttpMessageHandler<GraphBearerTokenHandler>()
             .AddHttpMessageHandler<ImmutableIdHandler>()
             .AddHttpMessageHandler<MailboxConcurrencyHandler>()
             .AddHttpMessageHandler<RetryAfterHandler>();

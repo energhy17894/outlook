@@ -5,8 +5,10 @@ using Microsoft.Extensions.Options;
 using OpsIntel.Connectors.Graph;
 using OpsIntel.Host.Api;
 using OpsIntel.Host.Auth;
+using OpsIntel.Host.Mail;
 using OpsIntel.Host.Security;
 using OpsIntel.Observability;
+using OpsIntel.Persistence.Sqlite;
 using OpsIntel.Platform.Abstractions;
 using OpsIntel.Platform.Windows;
 using Serilog;
@@ -75,6 +77,21 @@ builder.Services.PostConfigure<DpapiSecretStoreOptions>(options =>
 });
 builder.Services.AddSingleton<ISecretStore, DpapiSecretStore>();
 builder.Services.AddOpsIntelGraphConnector(builder.Configuration);
+
+// ADR-0010/0012: the shared SQLite job/outbox queue under DataDir — the Host enqueues,
+// OpsIntel.Intelligence leases (same DataDir\app.db as its Program.cs). WAL lets both hold it.
+// OpsIntelDbContextFactory.Create also adds sync_state to a file Intelligence created earlier
+// (EnsureCreated skips existing databases; see OpsIntelDbContext.SyncStateTableSql).
+// ponytail: one DbContext for the process — MailSyncWorker is its only (sequential) user;
+// switch to IDbContextFactory once request handlers touch the DB too.
+builder.Services.AddSingleton(_ =>
+{
+    var dbPath = OpsIntelPaths.ResolveDirectory(builder.Configuration, "DataDir", "app.db");
+    Directory.CreateDirectory(Path.GetDirectoryName(dbPath)!);
+    return OpsIntelDbContextFactory.Create($"Data Source={dbPath}");
+});
+builder.Services.AddSingleton<IJobQueue>(sp => new SqliteJobQueue(sp.GetRequiredService<OpsIntelDbContext>()));
+builder.Services.AddHostedService<MailSyncWorker>();
 
 var app = builder.Build();
 

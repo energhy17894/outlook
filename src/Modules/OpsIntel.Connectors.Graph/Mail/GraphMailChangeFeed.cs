@@ -22,7 +22,7 @@ public sealed class GraphMailChangeFeed : IChangeFeed
     // required by downstream normalization/threading; the rest keep payloads small.
     private static readonly string Select = string.Join(',',
         "id", "conversationId", "internetMessageId", "uniqueBody", "subject",
-        "receivedDateTime", "from", "isRead", "parentFolderId", "changeKey");
+        "receivedDateTime", "from", "toRecipients", "isRead", "parentFolderId", "changeKey");
 
     private readonly HttpClient _httpClient;
     private readonly string _mailboxId;
