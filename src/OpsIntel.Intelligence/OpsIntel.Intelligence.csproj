@@ -16,6 +16,7 @@
     <ProjectReference Include="..\Platform\OpsIntel.Platform.Abstractions\OpsIntel.Platform.Abstractions.csproj" />
     <ProjectReference Include="..\Platform\OpsIntel.Platform.Windows\OpsIntel.Platform.Windows.csproj" />
     <ProjectReference Include="..\Platform\OpsIntel.Observability\OpsIntel.Observability.csproj" />
+    <ProjectReference Include="..\Platform\OpsIntel.Persistence.Sqlite\OpsIntel.Persistence.Sqlite.csproj" />
     <ProjectReference Include="..\Modules\OpsIntel.AI.Extraction\OpsIntel.AI.Extraction.csproj" />
   </ItemGroup>
 

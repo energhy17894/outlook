@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using OpsIntel.AI.Extraction;
 using OpsIntel.Intelligence;
 using OpsIntel.Observability;
+using OpsIntel.Persistence.Sqlite;
 using OpsIntel.Platform.Abstractions;
 using OpsIntel.Platform.Windows;
 
@@ -34,7 +35,17 @@ var hostBuilder = Host.CreateDefaultBuilder(args)
         // OpsIntel.Intelligence holds no Microsoft Graph tokens (ADR-0007/ADR-0008): it never
         // authenticates to Graph and cannot send mail; it only processes content the Host has
         // already fetched and handed off via this job queue.
-        services.AddSingleton<IJobQueue, NoOpJobQueue>();
+        // ADR-0010/0012: the shared SQLite job/outbox queue under DataDir (the Host enqueues,
+        // this service leases). WAL mode lets both services hold the file open concurrently.
+        // ponytail: one DbContext for the process — fine for ExtractionWorker's single sequential
+        // loop; switch to IDbContextFactory once more than one worker polls concurrently.
+        services.AddSingleton<IJobQueue>(_ =>
+        {
+            // DataDir\app.db — the same file SetupHelper's `db backup` defaults to.
+            var dbPath = OpsIntelPaths.ResolveDirectory(context.Configuration, "DataDir", "app.db");
+            Directory.CreateDirectory(Path.GetDirectoryName(dbPath)!);
+            return new SqliteJobQueue(OpsIntelDbContextFactory.Create($"Data Source={dbPath}"));
+        });
 
         // Quarantined AI extraction pipeline (ADR-0013/ADR-0015/ADR-0019): no tools, no
         // Graph tokens — see OpsIntel.AI.Extraction.ServiceCollectionExtensions.

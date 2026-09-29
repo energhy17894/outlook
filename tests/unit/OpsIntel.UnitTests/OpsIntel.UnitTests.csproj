@@ -5,10 +5,14 @@
     <RootNamespace>OpsIntel.UnitTests</RootNamespace>
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
+    <!-- OpsIntel.Intelligence pulls in Foundry Local, which ships RID-specific native assets
+         only (see OpsIntel.AI.Extraction.csproj / SPIKE-FOUNDRY-LOCAL.md). -->
+    <RuntimeIdentifiers>linux-x64;win-x64</RuntimeIdentifiers>
   </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\src\OpsIntel.Host\OpsIntel.Host.csproj" />
+    <ProjectReference Include="..\..\..\src\OpsIntel.Intelligence\OpsIntel.Intelligence.csproj" />
     <ProjectReference Include="..\..\..\src\Platform\OpsIntel.Platform.Windows\OpsIntel.Platform.Windows.csproj" />
     <ProjectReference Include="..\..\..\src\Platform\OpsIntel.Persistence.Sqlite\OpsIntel.Persistence.Sqlite.csproj" />
   </ItemGroup>

@@ -6,7 +6,7 @@ namespace OpsIntel.Intelligence;
 
 /// <summary>
 /// The extraction pipeline's job loop. Polls <see cref="IJobQueue"/> for extraction jobs
-/// (Faz 0: always empty via <see cref="NoOpJobQueue"/>) and runs the quarantined
+/// (the shared SQLite job/outbox queue, ADR-0012) and runs the quarantined
 /// <see cref="IExtractor"/> (report §4: "Karantinaya alınmış çıkarıcı" — no tools,
 /// schema-only JSON output) against leased jobs.
 /// </summary>
@@ -68,13 +68,13 @@ public sealed class ExtractionWorker : BackgroundService
         }
     }
 
-    /// <summary>Returns true if the job completed successfully (and should be marked <see cref="IJobQueue.CompleteAsync"/>); false if it was failed via <see cref="IJobQueue.FailAsync"/>.</summary>
+    /// <summary>Returns true if the job should be marked <see cref="IJobQueue.CompleteAsync"/> (succeeded, or its payload is malformed and retrying is pointless); false if it was failed via <see cref="IJobQueue.FailAsync"/>.</summary>
     private async Task<bool> TryDispatchWorkItemExtractionAsync(JobLease lease, CancellationToken cancellationToken)
     {
         try
         {
             var thread = JsonSerializer.Deserialize<ExtractionThread>(lease.PayloadJson)
-                ?? throw new InvalidOperationException("Job payload deserialized to null.");
+                ?? throw new JsonException("Job payload deserialized to null.");
 
             var outcome = await _extractor.ExtractWorkItemsAsync(thread, cancellationToken);
 
@@ -84,6 +84,20 @@ public sealed class ExtractionWorker : BackgroundService
                 outcome.Items.Count,
                 outcome.DroppedForNoVerifiableEvidence);
 
+            return true;
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            // Service shutdown, not a job failure: leave the lease to expire so the job is
+            // picked up again after restart without burning one of its attempts.
+            throw;
+        }
+        catch (JsonException ex)
+        {
+            // A malformed payload will never parse on retry, so don't spend SqliteJobQueue's
+            // MaxAttempts/backoff on it: log loudly (no payload — it may hold mail content)
+            // and let the caller complete the job.
+            _logger.LogError(ex, "Job {JobId} has a malformed {JobType} payload; completing without retry.", lease.JobId, lease.JobType);
             return true;
         }
         catch (Exception ex)
