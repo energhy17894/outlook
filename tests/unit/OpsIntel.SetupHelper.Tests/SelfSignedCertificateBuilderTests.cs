@@ -53,24 +53,17 @@ public sealed class SelfSignedCertificateBuilderTests
     {
         using var certificate = SelfSignedCertificateBuilder.CreateSelfSigned(DefaultParameters(), DateTimeOffset.UtcNow);
 
-        var sanExtension = certificate.Extensions.Single(e => e.Oid?.Value == "2.5.29.17");
-        var sanText = sanExtension.Format(multiLine: false);
+        // Read the typed extension, not X509Extension.Format(): its text is OS- and locale-dependent
+        // ("IP Address" vs. "IP Adresi", "::1" vs. "0000:...:0001").
+        var san = certificate.Extensions.OfType<X509SubjectAlternativeNameExtension>().Single();
+        var dnsNames = san.EnumerateDnsNames().ToList();
+        var ipAddresses = san.EnumerateIPAddresses().ToList();
 
-        Assert.Contains("localhost", sanText, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("127.0.0.1", sanText, StringComparison.Ordinal);
-        // X509Extension.Format's IPv6 rendering is platform-dependent ("::1" on Linux, fully
-        // expanded "0000:...:0001" on Windows), so parse each "IP Address=" entry instead.
-        var ipAddresses = sanText
-            .Split(',', StringSplitOptions.TrimEntries)
-            .Where(entry => entry.StartsWith("IP Address", StringComparison.OrdinalIgnoreCase))
-            .Select(entry => entry[(entry.IndexOfAny(['=', ':']) + 1)..].Trim())
-            .Select(value => System.Net.IPAddress.TryParse(value, out var ip) ? ip : null)
-            .ToList();
-        Assert.True(
-            ipAddresses.Any(ip => ip is not null && ip.Equals(System.Net.IPAddress.IPv6Loopback)),
-            $"Expected an IPv6 loopback SAN entry, got: {sanText}");
-        Assert.Contains("TESTMACHINE01", sanText, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("testmachine01.corp.example.com", sanText, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("localhost", dnsNames, StringComparer.OrdinalIgnoreCase);
+        Assert.Contains("TESTMACHINE01", dnsNames, StringComparer.OrdinalIgnoreCase);
+        Assert.Contains("testmachine01.corp.example.com", dnsNames, StringComparer.OrdinalIgnoreCase);
+        Assert.Contains(System.Net.IPAddress.Loopback, ipAddresses);
+        Assert.Contains(System.Net.IPAddress.IPv6Loopback, ipAddresses);
     }
 
     [Fact]
