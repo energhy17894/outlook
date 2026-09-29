@@ -25,6 +25,20 @@ public class GraphBearerTokenHandlerTests
         Assert.Equal("Bearer sdk-token", sent[1].Headers.Authorization!.ToString());
     }
 
+    [Theory]
+    [InlineData("https://evil.example.com/v1.0/me/messages/delta?$deltatoken=x")]
+    [InlineData("http://graph.microsoft.com/v1.0/me/messages")]
+    public async Task SendAsync_NeverSendsTokenOutsideGraphHttps(string url)
+    {
+        var fake = new FakeHttpMessageHandler();
+        using var handler = new GraphBearerTokenHandler(new FixedTokenAuthService()) { InnerHandler = fake };
+        using var client = new HttpClient(handler);
+
+        await client.GetAsync(url);
+
+        Assert.Null(Assert.Single(fake.Requests).Headers.Authorization);
+    }
+
     private sealed class FixedTokenAuthService : IGraphAuthService
     {
         public Task<string> GetAccessTokenAsync(CancellationToken cancellationToken = default) => Task.FromResult("test-token");

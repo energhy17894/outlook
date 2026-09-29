@@ -20,7 +20,11 @@ public sealed class GraphBearerTokenHandler : DelegatingHandler
 
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
-        if (request.Headers.Authorization is null)
+        // Only ever to Graph over HTTPS: nextLink/deltaLink URLs come from response bodies and are
+        // followed verbatim, so a stray link must not carry the user's token elsewhere (same
+        // allow-list Kiota's BaseBearerTokenAuthenticationProvider applies to SDK calls).
+        if (request.Headers.Authorization is null
+            && request.RequestUri is { Scheme: "https", Host: "graph.microsoft.com" })
         {
             var token = await _authService.GetAccessTokenAsync(cancellationToken).ConfigureAwait(false);
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
