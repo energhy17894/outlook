@@ -30,7 +30,7 @@ public sealed class ExtractionWorkerTests
 
         public TaskCompletionSource<string> Outcome { get; } = new();
 
-        public Task<JobLease?> LeaseNextAsync(string workerId, TimeSpan leaseDuration, CancellationToken cancellationToken = default)
+        public Task<JobLease?> LeaseNextAsync(string workerId, IReadOnlyCollection<string> jobTypes, TimeSpan leaseDuration, CancellationToken cancellationToken = default)
             => Task.FromResult(Interlocked.Exchange(ref _pending, null));
 
         public Task CompleteAsync(string jobId, CancellationToken cancellationToken = default)

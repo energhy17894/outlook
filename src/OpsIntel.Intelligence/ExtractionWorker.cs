@@ -42,6 +42,7 @@ public sealed class ExtractionWorker : BackgroundService
         {
             var lease = await _jobQueue.LeaseNextAsync(
                 workerId: Environment.MachineName,
+                jobTypes: [WorkItemExtractionJobType],
                 leaseDuration: LeaseDuration,
                 cancellationToken: stoppingToken);
 
@@ -53,18 +54,12 @@ public sealed class ExtractionWorker : BackgroundService
 
             _logger.LogInformation("Leased job {JobId} of type {JobType}.", lease.JobId, lease.JobType);
 
-            if (lease.JobType == WorkItemExtractionJobType)
+            // Only WorkItemExtractionJobType is ever leased (see jobTypes above), so no
+            // "unknown type" branch: other services' jobs stay in the queue for them.
+            if (await TryDispatchWorkItemExtractionAsync(lease, stoppingToken))
             {
-                if (await TryDispatchWorkItemExtractionAsync(lease, stoppingToken))
-                {
-                    await _jobQueue.CompleteAsync(lease.JobId, stoppingToken);
-                }
-
-                continue;
+                await _jobQueue.CompleteAsync(lease.JobId, stoppingToken);
             }
-
-            _logger.LogWarning("Unrecognized job type {JobType}; completing without dispatch.", lease.JobType);
-            await _jobQueue.CompleteAsync(lease.JobId, stoppingToken);
         }
     }
 

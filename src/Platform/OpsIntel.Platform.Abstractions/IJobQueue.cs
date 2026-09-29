@@ -27,9 +27,15 @@ public interface IJobQueue
         DateTimeOffset? notBeforeUtc = null,
         CancellationToken cancellationToken = default);
 
-    /// <summary>Atomically leases the next runnable job, or <c>null</c> if none is due.</summary>
+    /// <summary>
+    /// Atomically leases the next runnable job whose type is in <paramref name="jobTypes"/>, or
+    /// <c>null</c> if none is due. Required, not optional: the jobs table is shared by the Host
+    /// and Intelligence services, so a consumer must never lease (and then drop) another
+    /// service's work.
+    /// </summary>
     Task<JobLease?> LeaseNextAsync(
         string workerId,
+        IReadOnlyCollection<string> jobTypes,
         TimeSpan leaseDuration,
         CancellationToken cancellationToken = default);
 

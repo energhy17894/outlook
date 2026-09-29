@@ -39,11 +39,11 @@ public sealed class SqliteJobQueueTests : IDisposable
         await _queue.EnqueueAsync("extract", "{}", "idem-1");
         await _queue.EnqueueAsync("extract", "{}", "idem-1");
 
-        var first = await _queue.LeaseNextAsync("worker-a", TimeSpan.FromMinutes(5));
+        var first = await _queue.LeaseNextAsync("worker-a", ["extract"], TimeSpan.FromMinutes(5));
         Assert.NotNull(first);
         await _queue.CompleteAsync(first!.JobId);
 
-        var second = await _queue.LeaseNextAsync("worker-a", TimeSpan.FromMinutes(5));
+        var second = await _queue.LeaseNextAsync("worker-a", ["extract"], TimeSpan.FromMinutes(5));
         Assert.Null(second);
     }
 
@@ -53,8 +53,8 @@ public sealed class SqliteJobQueueTests : IDisposable
         await _queue.EnqueueAsync("extract", "{}", "idem-a");
         await _queue.EnqueueAsync("extract", "{}", "idem-b");
 
-        var first = await _queue.LeaseNextAsync("worker-a", TimeSpan.FromMinutes(5));
-        var second = await _queue.LeaseNextAsync("worker-a", TimeSpan.FromMinutes(5));
+        var first = await _queue.LeaseNextAsync("worker-a", ["extract"], TimeSpan.FromMinutes(5));
+        var second = await _queue.LeaseNextAsync("worker-a", ["extract"], TimeSpan.FromMinutes(5));
 
         Assert.NotNull(first);
         Assert.NotNull(second);
@@ -64,8 +64,22 @@ public sealed class SqliteJobQueueTests : IDisposable
     [Fact]
     public async Task LeaseNextAsync_ReturnsNull_WhenNothingIsRunnable()
     {
-        var lease = await _queue.LeaseNextAsync("worker-a", TimeSpan.FromMinutes(5));
+        var lease = await _queue.LeaseNextAsync("worker-a", ["extract"], TimeSpan.FromMinutes(5));
         Assert.Null(lease);
+    }
+
+    [Fact]
+    public async Task LeaseNextAsync_OnlyLeasesRequestedJobTypes()
+    {
+        // The jobs table is shared by Host and Intelligence: each must leave the other's work alone.
+        await _queue.EnqueueAsync("graph_write", "{}", "idem-host");
+        await _queue.EnqueueAsync("extract", "{}", "idem-ai");
+
+        var lease = await _queue.LeaseNextAsync("worker-a", ["extract"], TimeSpan.FromMinutes(5));
+        Assert.Equal("extract", lease?.JobType);
+        Assert.Null(await _queue.LeaseNextAsync("worker-a", ["extract"], TimeSpan.FromMinutes(5)));
+
+        Assert.Equal("graph_write", (await _queue.LeaseNextAsync("worker-b", ["graph_write", "other"], TimeSpan.FromMinutes(5)))?.JobType);
     }
 
     [Fact]
@@ -73,12 +87,12 @@ public sealed class SqliteJobQueueTests : IDisposable
     {
         await _queue.EnqueueAsync("extract", "{}", "idem-1");
 
-        var leased = await _queue.LeaseNextAsync("worker-a", TimeSpan.FromMinutes(5));
+        var leased = await _queue.LeaseNextAsync("worker-a", ["extract"], TimeSpan.FromMinutes(5));
         Assert.NotNull(leased);
 
         // A second worker racing immediately after must not see the same job again — lease
         // exclusivity while the lease is still valid.
-        var contested = await _queue.LeaseNextAsync("worker-b", TimeSpan.FromMinutes(5));
+        var contested = await _queue.LeaseNextAsync("worker-b", ["extract"], TimeSpan.FromMinutes(5));
         Assert.Null(contested);
     }
 
@@ -87,13 +101,13 @@ public sealed class SqliteJobQueueTests : IDisposable
     {
         await _queue.EnqueueAsync("extract", "{}", "idem-1");
 
-        var first = await _queue.LeaseNextAsync("worker-a", TimeSpan.FromMinutes(1));
+        var first = await _queue.LeaseNextAsync("worker-a", ["extract"], TimeSpan.FromMinutes(1));
         Assert.NotNull(first);
 
         // Simulate worker-a crashing: nobody completes/fails the job, and the lease elapses.
         _time.Advance(TimeSpan.FromMinutes(2));
 
-        var reLeased = await _queue.LeaseNextAsync("worker-b", TimeSpan.FromMinutes(1));
+        var reLeased = await _queue.LeaseNextAsync("worker-b", ["extract"], TimeSpan.FromMinutes(1));
         Assert.NotNull(reLeased);
         Assert.Equal(first!.JobId, reLeased!.JobId);
 
@@ -105,13 +119,13 @@ public sealed class SqliteJobQueueTests : IDisposable
     public async Task CompleteAsync_MarksJobDone_SoItIsNeverLeasedAgain()
     {
         await _queue.EnqueueAsync("extract", "{}", "idem-1");
-        var leased = await _queue.LeaseNextAsync("worker-a", TimeSpan.FromMinutes(5));
+        var leased = await _queue.LeaseNextAsync("worker-a", ["extract"], TimeSpan.FromMinutes(5));
         Assert.NotNull(leased);
 
         await _queue.CompleteAsync(leased!.JobId);
 
         _time.Advance(TimeSpan.FromHours(1));
-        var again = await _queue.LeaseNextAsync("worker-b", TimeSpan.FromMinutes(5));
+        var again = await _queue.LeaseNextAsync("worker-b", ["extract"], TimeSpan.FromMinutes(5));
         Assert.Null(again);
     }
 
@@ -119,17 +133,17 @@ public sealed class SqliteJobQueueTests : IDisposable
     public async Task FailAsync_SchedulesRetry_NotBeforeBackoffElapses()
     {
         await _queue.EnqueueAsync("extract", "{}", "idem-1");
-        var leased = await _queue.LeaseNextAsync("worker-a", TimeSpan.FromMinutes(5));
+        var leased = await _queue.LeaseNextAsync("worker-a", ["extract"], TimeSpan.FromMinutes(5));
         Assert.NotNull(leased);
 
         await _queue.FailAsync(leased!.JobId, "boom");
 
         // Immediately after failing, the job should not be runnable again (still within backoff).
-        var tooSoon = await _queue.LeaseNextAsync("worker-b", TimeSpan.FromMinutes(5));
+        var tooSoon = await _queue.LeaseNextAsync("worker-b", ["extract"], TimeSpan.FromMinutes(5));
         Assert.Null(tooSoon);
 
         _time.Advance(TimeSpan.FromHours(2));
-        var retried = await _queue.LeaseNextAsync("worker-b", TimeSpan.FromMinutes(5));
+        var retried = await _queue.LeaseNextAsync("worker-b", ["extract"], TimeSpan.FromMinutes(5));
         Assert.NotNull(retried);
         Assert.Equal(leased.JobId, retried!.JobId);
     }
@@ -138,16 +152,16 @@ public sealed class SqliteJobQueueTests : IDisposable
     public async Task FailAsync_RespectsExplicitRetryAfter()
     {
         await _queue.EnqueueAsync("extract", "{}", "idem-1");
-        var leased = await _queue.LeaseNextAsync("worker-a", TimeSpan.FromMinutes(5));
+        var leased = await _queue.LeaseNextAsync("worker-a", ["extract"], TimeSpan.FromMinutes(5));
         Assert.NotNull(leased);
 
         await _queue.FailAsync(leased!.JobId, "boom", retryAfter: TimeSpan.FromMinutes(10));
 
         _time.Advance(TimeSpan.FromMinutes(5));
-        Assert.Null(await _queue.LeaseNextAsync("worker-b", TimeSpan.FromMinutes(5)));
+        Assert.Null(await _queue.LeaseNextAsync("worker-b", ["extract"], TimeSpan.FromMinutes(5)));
 
         _time.Advance(TimeSpan.FromMinutes(6));
-        Assert.NotNull(await _queue.LeaseNextAsync("worker-b", TimeSpan.FromMinutes(5)));
+        Assert.NotNull(await _queue.LeaseNextAsync("worker-b", ["extract"], TimeSpan.FromMinutes(5)));
     }
 
     [Fact]
@@ -158,7 +172,7 @@ public sealed class SqliteJobQueueTests : IDisposable
         string jobId = null!;
         for (var i = 0; i < SqliteJobQueue.MaxAttempts; i++)
         {
-            var leased = await _queue.LeaseNextAsync("worker-a", TimeSpan.FromMinutes(1));
+            var leased = await _queue.LeaseNextAsync("worker-a", ["extract"], TimeSpan.FromMinutes(1));
             Assert.NotNull(leased);
             jobId = leased!.JobId;
             await _queue.FailAsync(jobId, $"attempt {i} failed", retryAfter: TimeSpan.Zero);
@@ -167,7 +181,7 @@ public sealed class SqliteJobQueueTests : IDisposable
         // Every retry budget spent: the job must no longer be runnable, even with time advanced
         // far into the future.
         _time.Advance(TimeSpan.FromDays(365));
-        var afterExhaustion = await _queue.LeaseNextAsync("worker-b", TimeSpan.FromMinutes(1));
+        var afterExhaustion = await _queue.LeaseNextAsync("worker-b", ["extract"], TimeSpan.FromMinutes(1));
         Assert.Null(afterExhaustion);
 
         var state = await ReadJobStateAsync(jobId);

@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Text.Json;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using OpsIntel.Platform.Abstractions;
@@ -67,9 +68,16 @@ public sealed class SqliteJobQueue : IJobQueue
 
     public async Task<JobLease?> LeaseNextAsync(
         string workerId,
+        IReadOnlyCollection<string> jobTypes,
         TimeSpan leaseDuration,
         CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(jobTypes);
+        if (jobTypes.Count == 0)
+        {
+            throw new ArgumentException("At least one job type is required.", nameof(jobTypes));
+        }
+
         var connection = await OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
         var now = _timeProvider.GetUtcNow();
         var leasedUntil = now + leaseDuration;
@@ -86,14 +94,17 @@ public sealed class SqliteJobQueue : IJobQueue
             using (var select = connection.CreateCommand())
             {
                 // Runnable = still-pending jobs whose schedule has arrived, OR jobs whose lease
-                // expired without the worker completing/failing them (crash recovery).
+                // expired without the worker completing/failing them (crash recovery). SQLite
+                // can't bind an array, so the type list travels as one JSON parameter.
                 select.CommandText = """
                     SELECT id FROM jobs
-                    WHERE (state = $pending AND not_before_utc <= $now)
-                       OR (state = $leased AND leased_until < $now)
+                    WHERE ((state = $pending AND not_before_utc <= $now)
+                        OR (state = $leased AND leased_until < $now))
+                      AND type IN (SELECT value FROM json_each($types))
                     ORDER BY not_before_utc ASC
                     LIMIT 1;
                     """;
+                select.Parameters.AddWithValue("$types", JsonSerializer.Serialize(jobTypes));
                 select.Parameters.AddWithValue("$pending", JobStates.Pending);
                 select.Parameters.AddWithValue("$leased", JobStates.Leased);
                 select.Parameters.AddWithValue("$now", now.ToUniversalTime().ToString("O", CultureInfo.InvariantCulture));
