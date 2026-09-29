@@ -126,3 +126,6 @@ logs/
 __pycache__/
 *.pyc
 .venv/
+
+# Claude Code agent worktrees
+.claude/worktrees/

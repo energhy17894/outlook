@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using OpsIntel.AI.Extraction;
+using OpsIntel.Contracts;
 using OpsIntel.AI.Extraction.Verification;
 using OpsIntel.AI.Extraction.WorkItems;
 using OpsIntel.Intelligence;

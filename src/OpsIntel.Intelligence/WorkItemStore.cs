@@ -3,6 +3,7 @@ using System.Security.Cryptography;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
 using OpsIntel.AI.Extraction;
+using OpsIntel.Contracts;
 using OpsIntel.AI.Extraction.WorkItems;
 using OpsIntel.Persistence.Sqlite;
 
