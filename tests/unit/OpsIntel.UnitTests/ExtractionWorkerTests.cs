@@ -1,3 +1,4 @@
+using OpsIntel.Contracts;
 using Microsoft.Extensions.Logging.Abstractions;
 using OpsIntel.AI.Extraction;
 using OpsIntel.AI.Extraction.WorkItems;

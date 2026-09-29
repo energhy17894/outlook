@@ -1,3 +1,4 @@
+using OpsIntel.Contracts;
 using Microsoft.Extensions.AI;
 using OpsIntel.AI.Extraction;
 using OpsIntel.AI.Extraction.Prompts;

@@ -1,8 +1,8 @@
-namespace OpsIntel.AI.Extraction;
+namespace OpsIntel.Contracts;
 
 /// <summary>
 /// One cleaned message in a thread, as handed to an extractor. <see cref="CleanedBody"/> is
-/// the text produced by <c>OpsIntel.Normalization.EmailBodyCleaner</c> — the same text
+/// the text produced by <c>EmailBodyCleaner</c> — the same text
 /// evidence quotes are verified against.
 /// </summary>
 public sealed record ExtractionMessage(

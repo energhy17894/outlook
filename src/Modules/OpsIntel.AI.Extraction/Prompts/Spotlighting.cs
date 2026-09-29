@@ -1,3 +1,4 @@
+using OpsIntel.Contracts;
 using System.Text.RegularExpressions;
 
 namespace OpsIntel.AI.Extraction.Prompts;

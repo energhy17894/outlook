@@ -1,3 +1,4 @@
+using OpsIntel.Contracts;
 using OpsIntel.AI.Extraction.WorkItems;
 
 namespace OpsIntel.AI.Extraction;

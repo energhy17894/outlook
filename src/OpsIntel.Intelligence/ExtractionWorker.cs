@@ -1,3 +1,4 @@
+using OpsIntel.Contracts;
 using System.Text.Json;
 using OpsIntel.AI.Extraction;
 using OpsIntel.Platform.Abstractions;

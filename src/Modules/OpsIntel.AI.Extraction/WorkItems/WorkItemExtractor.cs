@@ -1,3 +1,4 @@
+using OpsIntel.Contracts;
 using System.Text.Json;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Logging;
