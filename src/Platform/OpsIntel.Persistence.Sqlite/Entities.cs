@@ -17,14 +17,17 @@ public sealed class ProjectRow
 public sealed class WorkItemRow
 {
     public string Id { get; set; } = default!;
-    public string ProjectId { get; set; } = default!;
+
+    /// <summary>Null until project assignment (roadmap S6) — the "atanmamış havuz".</summary>
+    public string? ProjectId { get; set; }
+
     public string Kind { get; set; } = default!;
     public string Title { get; set; } = default!;
     public string Status { get; set; } = default!;
     public string ReviewState { get; set; } = default!;
     public DateTimeOffset? DueAtUtc { get; set; }
 
-    public ProjectRow Project { get; set; } = default!;
+    public ProjectRow? Project { get; set; }
     public List<EvidenceRow> Evidence { get; set; } = [];
 }
 

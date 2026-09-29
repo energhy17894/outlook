@@ -2,6 +2,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using OpsIntel.AI.Extraction;
 using OpsIntel.AI.Extraction.WorkItems;
 using OpsIntel.Intelligence;
+using OpsIntel.Persistence.Sqlite;
 using OpsIntel.Platform.Abstractions;
 using Xunit;
 
@@ -15,7 +16,8 @@ public sealed class ExtractionWorkerTests
     public async Task MalformedPayload_IsCompletedWithoutRetry(string payload)
     {
         var queue = new SingleJobQueue(new JobLease("job-1", ExtractionWorker.WorkItemExtractionJobType, payload, 1, DateTimeOffset.UtcNow.AddMinutes(5)));
-        var worker = new ExtractionWorker(queue, new UnreachableExtractor(), NullLogger<ExtractionWorker>.Instance);
+        using var db = OpsIntelDbContextFactory.Create("Data Source=:memory:");
+        var worker = new ExtractionWorker(queue, new UnreachableExtractor(), new WorkItemStore(db), NullLogger<ExtractionWorker>.Instance);
 
         await worker.StartAsync(CancellationToken.None);
         var outcome = await queue.Outcome.Task.WaitAsync(TimeSpan.FromSeconds(10));

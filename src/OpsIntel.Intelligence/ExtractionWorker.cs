@@ -25,12 +25,14 @@ public sealed class ExtractionWorker : BackgroundService
 
     private readonly IJobQueue _jobQueue;
     private readonly IExtractor _extractor;
+    private readonly WorkItemStore _store;
     private readonly ILogger<ExtractionWorker> _logger;
 
-    public ExtractionWorker(IJobQueue jobQueue, IExtractor extractor, ILogger<ExtractionWorker> logger)
+    public ExtractionWorker(IJobQueue jobQueue, IExtractor extractor, WorkItemStore store, ILogger<ExtractionWorker> logger)
     {
         _jobQueue = jobQueue;
         _extractor = extractor;
+        _store = store;
         _logger = logger;
     }
 
@@ -72,11 +74,13 @@ public sealed class ExtractionWorker : BackgroundService
                 ?? throw new JsonException("Job payload deserialized to null.");
 
             var outcome = await _extractor.ExtractWorkItemsAsync(thread, cancellationToken);
+            var saved = await _store.SaveAsync(thread, outcome, cancellationToken);
 
             _logger.LogInformation(
-                "work_items extraction for thread {ThreadId}: {Kept} item(s) kept, {Dropped} dropped (no verifiable evidence).",
+                "work_items extraction for thread {ThreadId}: {Kept} item(s) kept ({Saved} new), {Dropped} dropped (no verifiable evidence).",
                 thread.ThreadId,
                 outcome.Items.Count,
+                saved,
                 outcome.DroppedForNoVerifiableEvidence);
 
             return true;

@@ -39,13 +39,15 @@ var hostBuilder = Host.CreateDefaultBuilder(args)
         // this service leases). WAL mode lets both services hold the file open concurrently.
         // ponytail: one DbContext for the process — fine for ExtractionWorker's single sequential
         // loop; switch to IDbContextFactory once more than one worker polls concurrently.
-        services.AddSingleton<IJobQueue>(_ =>
+        services.AddSingleton(_ =>
         {
             // DataDir\app.db — the same file SetupHelper's `db backup` defaults to.
             var dbPath = OpsIntelPaths.ResolveDirectory(context.Configuration, "DataDir", "app.db");
             Directory.CreateDirectory(Path.GetDirectoryName(dbPath)!);
-            return new SqliteJobQueue(OpsIntelDbContextFactory.Create($"Data Source={dbPath}"));
+            return OpsIntelDbContextFactory.Create($"Data Source={dbPath}");
         });
+        services.AddSingleton<IJobQueue>(sp => new SqliteJobQueue(sp.GetRequiredService<OpsIntelDbContext>()));
+        services.AddSingleton<WorkItemStore>();
 
         // Quarantined AI extraction pipeline (ADR-0013/ADR-0015/ADR-0019): no tools, no
         // Graph tokens — see OpsIntel.AI.Extraction.ServiceCollectionExtensions.
