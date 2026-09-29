@@ -40,3 +40,59 @@ jobs:
         with:
           name: test-results-${{ matrix.os }}
           path: TestResults
+
+  web:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: src/web
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          package_json_file: src/web/package.json
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: src/web/pnpm-lock.yaml
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Test
+        run: pnpm exec vitest run
+
+      - name: Build
+        run: pnpm build
+
+  eval:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: tests/eval
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install pytest
+        run: python -m pip install pytest
+
+      - name: Test
+        run: python -m pytest tests/ -q
+
+      - name: Baseline eval smoke run
+        run: python run_eval.py --predictions baseline_predictions.json
